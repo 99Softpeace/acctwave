@@ -22,13 +22,7 @@ const TransactionSchema = new mongoose.Schema({
     },
     payment_method: {
         type: String,
-        default: 'flutterwave',
-    },
-    flutterwave_tx_ref: {
-        type: String,
-    },
-    flutterwave_tx_id: {
-        type: Number,
+        default: 'manual',
     },
     type: {
         type: String,
