@@ -1,0 +1,54 @@
+import mongoose from 'mongoose';
+
+const TransactionSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
+    amount: {
+        type: Number,
+        required: true,
+    },
+    reference: {
+        type: String,
+        required: true,
+        unique: true,
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'successful', 'failed', 'cancelled'],
+        default: 'pending',
+    },
+    payment_method: {
+        type: String,
+        default: 'flutterwave',
+    },
+    flutterwave_tx_ref: {
+        type: String,
+    },
+    flutterwave_tx_id: {
+        type: Number,
+    },
+    type: {
+        type: String,
+        enum: ['deposit', 'withdrawal', 'order'],
+        default: 'deposit',
+    },
+    description: {
+        type: String,
+    },
+    metadata: {
+        type: mongoose.Schema.Types.Mixed,
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now,
+    },
+});
+
+export default mongoose.models.Transaction || mongoose.model('Transaction', TransactionSchema);
