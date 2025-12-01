@@ -11,7 +11,7 @@ const NETWORKS = [
     { id: '9MOBILE', name: '9Mobile', color: 'bg-green-900', textColor: 'text-white' },
 ];
 
-import { DATA_PLANS } from '@/lib/vtu';
+import { STATIC_DATA_PLANS as DATA_PLANS } from '@/lib/vtu-plans';
 
 export default function VTUPage() {
     const [activeTab, setActiveTab] = useState<'airtime' | 'data' | 'datacard'>('airtime');
