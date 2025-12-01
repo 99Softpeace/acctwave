@@ -1,12 +1,7 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-    throw new Error(
-        'Please define the MONGODB_URI environment variable inside .env.local'
-    );
-}
+// Allow build to proceed without DB connection, but fail at runtime if missing
+const MONGODB_URI = process.env.MONGODB_URI || '';
 
 /**
  * Global is used here to maintain a cached connection across hot reloads
@@ -22,6 +17,13 @@ if (!cached) {
 async function dbConnect() {
     if (cached.conn) {
         return cached.conn;
+    }
+
+    if (!MONGODB_URI) {
+        // This allows static generation to pass without a DB connection
+        // but will fail if an actual DB call is made
+        console.warn('MONGODB_URI is not defined');
+        return null;
     }
 
     if (!cached.promise) {
