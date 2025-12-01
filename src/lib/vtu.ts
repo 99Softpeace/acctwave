@@ -1,7 +1,9 @@
-const VTU_API_KEY = process.env.VTU_API_KEY;
+const VTU_API_KEY = process.env.VTU_API_KEY || '';
 const VTU_API_URL = process.env.VTU_API_URL || 'https://gladtidingsdata.com/api';
 
-if (!VTU_API_KEY) {
+// Warning is fine at runtime, but we ensure the variable exists to prevent crashes
+if (!VTU_API_KEY && typeof window === 'undefined') {
+    // Only warn on server side to avoid client console noise
     console.warn('VTU_API_KEY is not defined in environment variables');
 }
 
