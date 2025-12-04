@@ -25,7 +25,7 @@ export async function getServices() {
     const response = await fetch(SMM_API_URL!, {
         method: 'POST',
         body: params,
-        next: { revalidate: 3600 } // Next.js fetch caching
+        cache: 'no-store' // Disable caching to ensure fresh data and avoid Vercel static generation issues
     });
 
     if (!response.ok) {

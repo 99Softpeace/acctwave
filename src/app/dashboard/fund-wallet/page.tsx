@@ -11,7 +11,7 @@ export default function FundWalletPage() {
     const [virtualAccount, setVirtualAccount] = useState<any>(null);
     const [error, setError] = useState('');
     const [copied, setCopied] = useState(false);
-    const [amount, setAmount] = useState(0);
+    const [amount, setAmount] = useState<string | number>('');
     const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
@@ -41,7 +41,8 @@ export default function FundWalletPage() {
     };
 
     const handlePayment = async () => {
-        if (amount < 100) {
+        const amountValue = Number(amount);
+        if (!amountValue || amountValue < 100) {
             setError('Minimum funding amount is ₦100.');
             return;
         }
@@ -114,7 +115,7 @@ export default function FundWalletPage() {
                             <input
                                 type="number"
                                 value={amount}
-                                onChange={(e) => setAmount(Number(e.target.value))}
+                                onChange={(e) => setAmount(e.target.value)}
                                 className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
                                 placeholder="Enter amount (min 100)"
                                 min="100"
@@ -123,7 +124,7 @@ export default function FundWalletPage() {
 
                         <button
                             onClick={handlePayment}
-                            disabled={processing || amount < 100}
+                            disabled={processing || Number(amount) < 100}
                             className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2"
                         >
                             {processing ? (

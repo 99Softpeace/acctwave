@@ -1,17 +1,14 @@
 const POCKETFI_API_KEY = process.env.POCKETFI_API_KEY || '';
 const BASE_URL = 'https://api.pocketfi.ng/api/v1';
 
-export async function initializePayment(email: string, amount: number, reference: string) {
+export async function initializePayment(email: string, amount: number, reference: string, firstName: string, lastName: string) {
     const url = `${BASE_URL}/checkout/request`;
     console.log(`PocketFi: Initializing payment at ${url}`);
 
-    // Extract name parts or use defaults
-    const nameParts = (email.split('@')[0] || 'User').split('.');
-    const firstName = nameParts[0] || 'User';
-    const lastName = nameParts[1] || 'Customer';
+    // Name parts are now passed in
 
-    // Extract Business ID from API Key (Format: ID|SECRET)
-    const businessId = POCKETFI_API_KEY.split('|')[0];
+    // Extract Business ID: Use env var or split API key
+    const businessId = process.env.POCKETFI_BUSINESS_ID || POCKETFI_API_KEY.split('|')[0];
 
     const payload = {
         first_name: firstName,

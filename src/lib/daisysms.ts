@@ -61,7 +61,12 @@ export class DaisySMS {
     }
 
     static readonly COUNTRIES: Record<string, { name: string; flag: string }> = {
-        '187': { name: 'United States', flag: '🇺🇸' }
+        '187': { name: 'United States', flag: '🇺🇸' },
+        '16': { name: 'United Kingdom', flag: '🇬🇧' },
+        '15': { name: 'Canada', flag: '🇨🇦' },
+        '6': { name: 'Germany', flag: '🇩🇪' },
+        '73': { name: 'Netherlands', flag: '🇳🇱' },
+        '139': { name: 'Nigeria', flag: '🇳🇬' }
     };
 
     static async getCountries(): Promise<DaisyService[]> { // Reusing DaisyService interface for simplicity or create new

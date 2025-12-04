@@ -104,7 +104,17 @@ export default function OrderForm() {
     // Filter categories based on search AND selected platform
     const filteredCategories = useMemo(() => {
         return categories.filter(category => {
-            const matchesSearch = category.toLowerCase().includes(searchQuery.toLowerCase());
+            // Check if category name matches
+            const categoryMatches = category.toLowerCase().includes(searchQuery.toLowerCase());
+
+            // Check if ANY service in this category matches
+            const servicesInCategory = services.filter(s => s.category === category);
+            const hasMatchingService = servicesInCategory.some(s =>
+                s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                s.service.toString().includes(searchQuery)
+            );
+
+            const matchesSearch = categoryMatches || hasMatchingService;
 
             let matchesPlatform = true;
             if (selectedPlatform === 'all') {
@@ -119,7 +129,7 @@ export default function OrderForm() {
 
             return matchesSearch && matchesPlatform;
         });
-    }, [categories, searchQuery, selectedPlatform]);
+    }, [categories, searchQuery, selectedPlatform, services]);
 
     // Auto-select first category when platform changes
     useEffect(() => {
@@ -134,10 +144,34 @@ export default function OrderForm() {
     }, [filteredCategories, selectedPlatform]);
 
     // Filter services based on selected category
+    // Filter services based on selected category AND search query
     const filteredServices = useMemo(() => {
         if (!selectedCategory) return [];
-        return services.filter(s => s.category === selectedCategory);
-    }, [selectedCategory, services]);
+
+        let categoryServices = services.filter(s => s.category === selectedCategory);
+
+        if (searchQuery) {
+            const lowerQuery = searchQuery.toLowerCase();
+            // If the category name itself matches, we might want to show all (optional), 
+            // but usually users expect to see matching services if they typed something specific.
+            // Let's filter services that match the query OR if the category name matches, show all?
+            // Better UX: Filter services that match. If none match but category matches, maybe show all?
+            // Simple approach: Filter services that match name or ID.
+
+            const matchingServices = categoryServices.filter(s =>
+                s.name.toLowerCase().includes(lowerQuery) ||
+                s.service.toString().includes(lowerQuery)
+            );
+
+            // If we found matching services, return them.
+            // If NO services match (meaning only the category name matched), return all services in this category.
+            if (matchingServices.length > 0) {
+                return matchingServices;
+            }
+        }
+
+        return categoryServices;
+    }, [selectedCategory, services, searchQuery]);
 
     const selectedService = services.find(s => s.service.toString() === selectedServiceId.toString());
     const totalCost = selectedService && quantity
