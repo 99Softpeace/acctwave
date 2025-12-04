@@ -80,13 +80,17 @@ export class DaisySMS {
 
     static async getServices(countryId: string = '187'): Promise<DaisyService[]> {
         try {
+            console.log(`[DaisySMS] Fetching services for country ${countryId}...`);
             const responseText = await this.request({ action: 'getPrices' });
-            const data = JSON.parse(responseText);
 
+            // Log first 100 chars to verify response structure
+            console.log(`[DaisySMS] Raw Response (snippet): ${responseText.slice(0, 100)}`);
+
+            const data = JSON.parse(responseText);
             const countryServices = data[countryId];
 
             if (!countryServices) {
-                console.error(`No services found for country ${countryId}`);
+                console.warn(`[DaisySMS] No services found for country ${countryId}. Available countries in response: ${Object.keys(data).join(', ')}`);
                 return [];
             }
 
@@ -104,11 +108,12 @@ export class DaisySMS {
                 };
             });
 
+            console.log(`[DaisySMS] Found ${services.length} services for country ${countryId}`);
             // Sort alphabetically by name
             return services.sort((a, b) => a.name.localeCompare(b.name));
 
         } catch (e) {
-            console.error('Error parsing services', e);
+            console.error('[DaisySMS] Error parsing services', e);
             return [];
         }
     }

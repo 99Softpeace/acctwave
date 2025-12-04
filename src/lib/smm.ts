@@ -17,54 +17,72 @@ export async function getServices() {
         return servicesCache;
     }
 
+    console.log(`[SMM] Fetching services from ${SMM_API_URL}...`);
+    console.log(`[SMM] API Key present: ${!!SMM_API_KEY}`);
+
     const params = new URLSearchParams({
         key: SMM_API_KEY!,
         action: 'services',
     });
 
-    const response = await fetch(SMM_API_URL!, {
-        method: 'POST',
-        body: params,
-        cache: 'no-store' // Disable caching to ensure fresh data and avoid Vercel static generation issues
-    });
+    try {
+        const response = await fetch(SMM_API_URL!, {
+            method: 'POST',
+            body: params,
+            cache: 'no-store'
+        });
 
-    if (!response.ok) {
-        throw new Error('Failed to fetch services');
-    }
+        console.log(`[SMM] Response Status: ${response.status}`);
 
-    const services = await response.json();
-
-    // --- Dynamic Pricing Logic ---
-    // 1. Fetch Real-time Exchange Rate (or use a safe fallback)
-    const EXCHANGE_RATE = 1750; // 1 USD = 1750 NGN
-    const PROFIT_MARGIN = 1.4;  // 40% Profit Margin (1.4x multiplier)
-
-    // 2. Transform Prices
-    const updatedServices = services.map((service: any) => {
-        // Assuming provider price is in USD (e.g., "0.50")
-        const costPriceUSD = parseFloat(service.rate);
-
-        if (isNaN(costPriceUSD)) {
-            return service; // Return original if rate is invalid
+        if (!response.ok) {
+            const text = await response.text();
+            console.error(`[SMM] HTTP Error: ${text}`);
+            throw new Error(`Failed to fetch services: ${response.status}`);
         }
 
-        // Calculate Selling Price in NGN
-        // Formula: (Cost * Exchange Rate) * Profit Margin
-        const sellingPriceNGN = Math.ceil((costPriceUSD * EXCHANGE_RATE) * PROFIT_MARGIN);
+        const services = await response.json();
+        console.log(`[SMM] Fetched ${Array.isArray(services) ? services.length : '0'} services`);
 
-        return {
-            ...service,
-            rate: sellingPriceNGN.toString(), // Update rate to NGN
-            original_rate_usd: service.rate, // Keep track of original cost
-            currency: 'NGN'
-        };
-    });
+        if (!Array.isArray(services)) {
+            console.error('[SMM] Unexpected response format:', JSON.stringify(services).slice(0, 200));
+            return [];
+        }
 
-    // Update cache
-    servicesCache = updatedServices;
-    lastFetchTime = now;
+        // --- Dynamic Pricing Logic ---
+        // 1. Fetch Real-time Exchange Rate (or use a safe fallback)
+        const EXCHANGE_RATE = 1750; // 1 USD = 1750 NGN
+        const PROFIT_MARGIN = 1.4;  // 40% Profit Margin (1.4x multiplier)
 
-    return updatedServices;
+        // 2. Transform Prices
+        const updatedServices = services.map((service: any) => {
+            // Assuming provider price is in USD (e.g., "0.50")
+            const costPriceUSD = parseFloat(service.rate);
+
+            if (isNaN(costPriceUSD)) {
+                return service; // Return original if rate is invalid
+            }
+
+            // Calculate Selling Price in NGN
+            // Formula: (Cost * Exchange Rate) * Profit Margin
+            const sellingPriceNGN = Math.ceil((costPriceUSD * EXCHANGE_RATE) * PROFIT_MARGIN);
+
+            return {
+                ...service,
+                rate: sellingPriceNGN.toString(), // Update rate to NGN
+                original_rate_usd: service.rate, // Keep track of original cost
+                currency: 'NGN'
+            };
+        });
+
+        // Update cache
+        servicesCache = updatedServices;
+        lastFetchTime = now;
+
+        return updatedServices;
+    } catch (error) {
+        console.error('[SMM] Error fetching services:', error);
+        throw error;
+    }
 }
 
 export async function addOrder(serviceId: number, link: string, quantity: number) {
