@@ -190,6 +190,30 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Join Community Banner (Mobile) */}
+                {/* Netflix Log Banner (Mobile) */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-900/40 to-red-950/40 border border-red-500/20 p-5 group mb-6">
+                    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+                    <div className="absolute -right-10 -top-10 w-32 h-32 bg-red-500/10 rounded-full blur-3xl group-hover:bg-red-500/20 transition-all duration-500"></div>
+
+                    <div className="relative flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg shadow-red-500/20">
+                                <Tv className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-white text-sm">Get Netflix Log</h3>
+                                <p className="text-xs text-red-200/80">Premium accounts available</p>
+                            </div>
+                        </div>
+                        <Link
+                            href="/dashboard/modded-apps"
+                            className="bg-white/10 hover:bg-white/20 text-white p-2.5 rounded-xl border border-white/10 transition-colors"
+                        >
+                            <ArrowUpRight className="w-5 h-5" />
+                        </Link>
+                    </div>
+                </div>
+
                 {/* Join Community Banner (Mobile) */}
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-green-900/40 to-emerald-900/40 border border-green-500/20 p-5 group">
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
@@ -347,6 +371,36 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Join Community Banner (Desktop) */}
+                {/* Netflix Log Banner (Desktop) */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-900/40 via-red-950/40 to-black border border-red-500/20 p-8 group mb-8">
+                    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl group-hover:bg-red-500/20 transition-all duration-500"></div>
+
+                    <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-6">
+                            <div className="p-4 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-xl shadow-red-500/20 group-hover:scale-110 transition-transform duration-300">
+                                <Tv className="w-8 h-8 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-bold text-white mb-1">Get Netflix Log</h3>
+                                <p className="text-red-200/80 max-w-md">
+                                    Access premium Netflix accounts instantly. High quality, secure, and ready to use.
+                                </p>
+                            </div>
+                        </div>
+                        <Link
+                            href="/dashboard/modded-apps"
+                            className="group/btn relative overflow-hidden bg-white/5 hover:bg-white/10 text-white px-8 py-4 rounded-xl font-bold transition-all border border-white/10 hover:border-white/20"
+                        >
+                            <div className="relative flex items-center gap-3">
+                                <Tv className="w-5 h-5" />
+                                <span>Get Access Now</span>
+                                <ArrowUpRight className="w-4 h-4 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
+                            </div>
+                        </Link>
+                    </div>
+                </div>
+
                 {/* Join Community Banner (Desktop) */}
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-green-900/40 via-emerald-900/40 to-black border border-green-500/20 p-8 group">
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>

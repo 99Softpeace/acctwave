@@ -12,148 +12,136 @@ export default function Background() {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
         let animationFrameId: number;
-        let width = window.innerWidth;
-        let height = window.innerHeight;
+        let mouse = { x: 0, y: 0 };
 
-        // Configuration
-        const particleCount = Math.min(Math.floor((width * height) / 10000), 150); // More particles
-        const connectionDistance = 120; // Shorter connections for tighter network
-        const moveSpeed = 0.4; // Slightly slower, more graceful
+        // Icons paths (simplified SVG paths) - Removed music icon
+        const icons = {
+            heart: new Path2D('M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'),
+            bolt: new Path2D('M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C7.56 12.72 9.6 8.54 12.22 3c.15-.31.42-.35.63-.35h4.86c.4 0 .61.45.33.74-.29.29-.07.03-.09.06L14.5 9h3.8c.66 0 .88.58.48 1.05-.4.47-.14.17-.16.21L11 21z'),
+            play: new Path2D('M8 5v14l11-7z'),
+            comment: new Path2D('M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z'),
+            like: new Path2D('M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-1.91l-.01-.01L23 10z')
+        };
 
+        const colors = ['#FF3B30', '#007AFF', '#34C759', '#FFD60A', '#FF2D55', '#5856D6'];
 
         class Particle {
             x: number;
             y: number;
-            vx: number;
-            vy: number;
             size: number;
+            speedX: number;
+            speedY: number;
+            color: string;
+            icon: Path2D;
+            rotation: number;
+            rotationSpeed: number;
+            scale: number;
+            originalX: number;
+            originalY: number;
 
             constructor() {
                 this.x = Math.random() * width;
                 this.y = Math.random() * height;
-                this.vx = (Math.random() - 0.5) * moveSpeed;
-                this.vy = (Math.random() - 0.5) * moveSpeed;
-                this.size = Math.random() * 2 + 1;
+                this.originalX = this.x;
+                this.originalY = this.y;
+                this.size = Math.random() * 20 + 15; // 15-35px
+                this.speedX = (Math.random() - 0.5) * 1;
+                this.speedY = (Math.random() - 0.5) * 1;
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                const iconKeys = Object.keys(icons) as Array<keyof typeof icons>;
+                this.icon = icons[iconKeys[Math.floor(Math.random() * iconKeys.length)]];
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.02;
+                this.scale = 0;
             }
 
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
+            update(mouse: { x: number, y: number }) {
+                // Mouse repulsion
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const maxDistance = 200;
 
-                // Bounce off edges
-                if (this.x < 0 || this.x > width) this.vx *= -1;
-                if (this.y < 0 || this.y > height) this.vy *= -1;
+                if (distance < maxDistance) {
+                    const force = (maxDistance - distance) / maxDistance;
+                    const directionX = dx / distance;
+                    const directionY = dy / distance;
+                    this.x -= directionX * force * 5;
+                    this.y -= directionY * force * 5;
+                } else {
+                    // Return to original position (drift)
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                }
+
+                // Wrap around screen
+                if (this.x < -50) this.x = width + 50;
+                if (this.x > width + 50) this.x = -50;
+                if (this.y < -50) this.y = height + 50;
+                if (this.y > height + 50) this.y = -50;
+
+                this.rotation += this.rotationSpeed;
+                if (this.scale < 1) this.scale += 0.01;
             }
 
-            draw() {
-                if (!ctx) return;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = '#00FFFF'; // Cyan particles
-                ctx.fill();
+            draw(ctx: CanvasRenderingContext2D) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.scale(this.scale, this.scale);
+
+                // Glow effect
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+
+                ctx.fillStyle = this.color;
+                // Center the icon
+                ctx.translate(-12, -12);
+                ctx.fill(this.icon);
+
+                ctx.restore();
             }
         }
 
-        let particles: Particle[] = [];
-
-        const initParticles = () => {
-            particles = [];
-            for (let i = 0; i < particleCount; i++) {
-                particles.push(new Particle());
-            }
-        };
-
-        const handleResize = () => {
-            width = window.innerWidth;
-            height = window.innerHeight;
-            canvas.width = width;
-            canvas.height = height;
-            initParticles();
-        };
-
-        const drawConnections = () => {
-            if (!ctx) return;
-            const time = Date.now() * 0.001; // Current time in seconds
-
-            for (let i = 0; i < particles.length; i++) {
-                for (let j = i + 1; j < particles.length; j++) {
-                    const dx = particles[i].x - particles[j].x;
-                    const dy = particles[i].y - particles[j].y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-
-                    if (distance < connectionDistance) {
-                        const opacity = 1 - distance / connectionDistance;
-
-                        // Draw connection line
-                        ctx.beginPath();
-                        ctx.strokeStyle = `rgba(0, 122, 255, ${opacity * 0.2})`; // Subtle Blue
-                        ctx.lineWidth = 0.5;
-                        ctx.moveTo(particles[i].x, particles[i].y);
-                        ctx.lineTo(particles[j].x, particles[j].y);
-                        ctx.stroke();
-
-                        // "Data Stream" effect: Moving packets
-                        // Use a pseudo-random offset based on particle indices so flows are independent
-                        const flowSpeed = 1.0;
-                        const flowOffset = (particles[i].x * particles[j].y) % 1000;
-                        const progress = (time * flowSpeed + flowOffset) % 1;
-
-                        // Only draw packet if connection is strong enough
-                        if (opacity > 0.2) {
-                            const packetX = particles[i].x + (particles[j].x - particles[i].x) * progress;
-                            const packetY = particles[i].y + (particles[j].y - particles[i].y) * progress;
-
-                            ctx.beginPath();
-                            ctx.arc(packetX, packetY, 1.5, 0, Math.PI * 2);
-                            // Cyan packet with glow
-                            ctx.fillStyle = `rgba(0, 255, 255, ${opacity})`;
-                            ctx.shadowBlur = 4;
-                            ctx.shadowColor = '#00FFFF';
-                            ctx.fill();
-                            ctx.shadowBlur = 0; // Reset shadow
-                        }
-                    }
-                }
-            }
-        };
+        const particles: Particle[] = Array.from({ length: 30 }, () => new Particle());
 
         const animate = () => {
-            if (!ctx) return;
-            ctx.clearRect(0, 0, width, height);
-
-            // Draw background gradient
-            const gradient = ctx.createLinearGradient(0, 0, width, height);
-            gradient.addColorStop(0, '#080B1A');
-            gradient.addColorStop(1, '#050711');
-            ctx.fillStyle = gradient;
+            ctx.fillStyle = '#080B1A';
             ctx.fillRect(0, 0, width, height);
 
+            // Draw particles
             particles.forEach(particle => {
-                particle.update();
-                particle.draw();
+                particle.update(mouse);
+                particle.draw(ctx);
             });
-
-            drawConnections();
 
             animationFrameId = requestAnimationFrame(animate);
         };
 
-        // Initialize
-        handleResize();
-        window.addEventListener('resize', handleResize);
         animate();
 
+        const handleMouseMove = (e: MouseEvent) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        };
+
+        const handleResize = () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('resize', handleResize);
+
         return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('resize', handleResize);
             cancelAnimationFrame(animationFrameId);
         };
     }, []);
 
-    return (
-        <canvas
-            ref={canvasRef}
-            className="fixed inset-0 -z-10 pointer-events-none"
-        />
-    );
+    return <canvas ref={canvasRef} className="fixed inset-0 -z-10" />;
 }

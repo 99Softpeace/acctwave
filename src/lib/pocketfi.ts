@@ -34,13 +34,17 @@ export async function initializePayment(email: string, amount: number, reference
         body: JSON.stringify(payload)
     });
 
+    const responseData = await response.json();
+    console.log('--- POCKETFI RESPONSE START ---');
+    console.log(JSON.stringify(responseData, null, 2));
+    console.log('--- POCKETFI RESPONSE END ---');
+
     if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`PocketFi API Error (${response.status}): ${errorText}`);
-        throw new Error(`Failed to initialize payment: ${response.status} - ${errorText}`);
+        console.error(`PocketFi API Error (${response.status}):`, responseData);
+        throw new Error(`Failed to initialize payment: ${response.status} - ${JSON.stringify(responseData)}`);
     }
 
-    return response.json();
+    return responseData;
 }
 
 export async function verifyPayment(reference: string) {

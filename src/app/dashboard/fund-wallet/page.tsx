@@ -62,8 +62,8 @@ export default function FundWalletPage() {
             });
             const data = await res.json();
 
-            if (data.success && data.data.authorization_url) {
-                window.location.href = data.data.authorization_url;
+            if (data.success && data.authorization_url) {
+                window.location.href = data.authorization_url;
             } else {
                 setError(data.message || 'Failed to initiate payment.');
             }

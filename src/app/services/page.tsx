@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { TrendingUp, Smartphone, Code, Users, ArrowRight, Zap, Wifi } from 'lucide-react';
+import { TrendingUp, Smartphone, Code, Users, ArrowRight, Zap, Wifi, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 const services = [
@@ -26,6 +26,16 @@ const services = [
         cta: 'Get Numbers'
     },
     {
+        id: 'logs',
+        name: 'Buy Logs',
+        icon: FileText,
+        color: 'from-pink-500 to-rose-600',
+        features: ['Fresh Accounts', 'High Quality', 'Instant Access', 'Daily Updates'],
+        desc: 'Purchase high-quality logs and accounts for various platforms securely and instantly.',
+        link: '/signup',
+        cta: 'Buy Logs'
+    },
+    {
         id: 'vtu',
         name: 'VTU & Bills',
         icon: Wifi,
@@ -36,16 +46,6 @@ const services = [
         cta: 'Pay Bills'
     },
     {
-        id: 'api',
-        name: 'API Solutions',
-        icon: Code,
-        color: 'from-orange-400 to-red-600',
-        features: ['Easy Integration', 'Full Documentation', 'High Rate Limits', 'Developer Support'],
-        desc: 'Connect your own platform directly to our services with our robust and reliable API.',
-        link: '/signup', // Assuming API docs are inside dashboard or separate
-        cta: 'Access API'
-    },
-    {
         id: 'reseller',
         name: 'Reseller Panel',
         icon: Users,
@@ -54,6 +54,16 @@ const services = [
         desc: 'Start your own SMM business. Get access to exclusive reseller rates and tools.',
         link: '/signup',
         cta: 'Become Reseller'
+    },
+    {
+        id: 'api',
+        name: 'API Solutions',
+        icon: Code,
+        color: 'from-orange-400 to-red-600',
+        features: ['Easy Integration', 'Full Documentation', 'High Rate Limits', 'Developer Support'],
+        desc: 'Connect your own platform directly to our services with our robust and reliable API.',
+        link: '/signup',
+        cta: 'Access API'
     }
 ];
 
@@ -139,55 +149,7 @@ export default function ServicesPage() {
                     ))}
                 </div>
 
-                {/* Logs Card Section */}
-                <motion.div
-                    initial={{ opacity: 0, y: 40 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.8 }}
-                    className="mt-24 max-w-4xl mx-auto"
-                >
-                    <div className="glass-card rounded-3xl border border-white/10 overflow-hidden relative">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
 
-                        <div className="p-8 border-b border-white/5 flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                                    <Code className="w-5 h-5 text-primary" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-white">Live Activity Logs</h3>
-                                    <p className="text-sm text-gray-400">Real-time system performance</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                <span className="text-xs font-mono text-green-400">SYSTEM ONLINE</span>
-                            </div>
-                        </div>
-
-                        <div className="p-6 bg-black/40 font-mono text-sm space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar">
-                            {[
-                                { time: '10:42:15', type: 'INFO', msg: 'Order #8921 processed successfully', color: 'text-green-400' },
-                                { time: '10:42:12', type: 'API', msg: 'New connection from 192.168.x.x', color: 'text-blue-400' },
-                                { time: '10:41:58', type: 'SYSTEM', msg: 'Service metrics updated: 99.9% uptime', color: 'text-purple-400' },
-                                { time: '10:41:45', type: 'INFO', msg: 'User registration: @crypto_king', color: 'text-gray-300' },
-                                { time: '10:41:30', type: 'API', msg: 'Rate limit check passed', color: 'text-blue-400' },
-                                { time: '10:41:15', type: 'INFO', msg: 'Payment gateway handshake complete', color: 'text-yellow-400' },
-                            ].map((log, i) => (
-                                <div key={i} className="flex items-start gap-4 border-b border-white/5 pb-2 last:border-0 last:pb-0">
-                                    <span className="text-gray-500 shrink-0">{log.time}</span>
-                                    <span className={`font-bold shrink-0 w-16 ${log.color}`}>{log.type}</span>
-                                    <span className="text-gray-300">{log.msg}</span>
-                                </div>
-                            ))}
-                            <div className="flex items-center gap-2 text-gray-500 pt-2 animate-pulse">
-                                <span className="text-primary">➜</span>
-                                <span>Listening for new events...</span>
-                            </div>
-                        </div>
-                    </div>
-                </motion.div>
 
                 {/* Bottom CTA */}
                 <motion.div

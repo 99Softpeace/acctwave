@@ -35,14 +35,21 @@ export async function POST(req: Request) {
         // We pass the real names now
         const paymentData = await initializePayment(email, amount, reference, firstName, lastName);
 
+        console.log('Payment Data received:', paymentData);
+
         if (paymentData.status === 'success') {
             return NextResponse.json({
                 success: true,
-                authorization_url: paymentData.data.authorization_url,
-                reference: paymentData.data.reference
+                authorization_url: paymentData.payment_link,
+                reference: paymentData.payment_id
             });
         } else {
-            return NextResponse.json({ success: false, message: paymentData.message || 'Payment initialization failed' }, { status: 400 });
+            console.error('Payment initialization failed or invalid response:', paymentData);
+            return NextResponse.json({
+                success: false,
+                message: paymentData.message || 'Payment initialization failed',
+                debug: paymentData
+            }, { status: 400 });
         }
 
     } catch (error: any) {
