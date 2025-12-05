@@ -14,7 +14,7 @@ const sidebarLinks = [
     { name: 'Rent Number', href: '/dashboard/rent-number', icon: Smartphone },
     { name: 'Buy eSIM', href: '/dashboard/esim', icon: Wifi },
     { name: 'VTU & Bills', href: '/dashboard/vtu', icon: CreditCard },
-    { name: 'Buy Logs', href: '/dashboard/modded-apps', icon: AppWindow },
+    { name: 'Buy Logs', href: '/dashboard/buy-logs', icon: AppWindow },
     { name: 'API Docs', href: '/dashboard/api-docs', icon: FileText },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];

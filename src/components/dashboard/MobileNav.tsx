@@ -16,7 +16,7 @@ const sidebarLinks = [
     { name: 'Foreign Numbers', href: '/dashboard/virtual-numbers', icon: Smartphone },
     { name: 'Rent Number', href: '/dashboard/rent-number', icon: Smartphone },
     { name: 'VTU & Bills', href: '/dashboard/vtu', icon: CreditCard },
-    { name: 'Buy Logs', href: '/dashboard/modded-apps', icon: AppWindow },
+    { name: 'Buy Logs', href: '/dashboard/buy-logs', icon: AppWindow },
     { name: 'API Docs', href: '/dashboard/api-docs', icon: FileText },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
@@ -29,7 +29,12 @@ export default function MobileNav() {
     const [isOpen, setIsOpen] = useState(false);
 
     const isDashboard = pathname === '/dashboard';
-    const pageTitle = pathname.split('/').pop()?.replace(/-/g, ' ') || 'Dashboard';
+    const getPageTitle = (path: string) => {
+        const segment = path.split('/').pop();
+        if (segment === 'buy-logs') return 'Buy Logs';
+        return segment?.replace(/-/g, ' ') || 'Dashboard';
+    };
+    const pageTitle = getPageTitle(pathname);
 
     return (
         <>

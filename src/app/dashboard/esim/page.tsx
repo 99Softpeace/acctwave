@@ -25,6 +25,14 @@ export default function ESIMPage() {
     const [purchasing, setPurchasing] = useState<number | null>(null);
     const [purchasedOrder, setPurchasedOrder] = useState<any>(null);
 
+    // Search State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    const filteredCountries = countries.filter(c =>
+        c.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     const EXCHANGE_RATE = 1600; // Display rate
 
     useEffect(() => {
@@ -164,18 +172,55 @@ export default function ESIMPage() {
             <div className="glass-card p-6 rounded-2xl border border-white/10">
                 <label className="block text-sm font-medium text-gray-400 mb-2">Select Destination</label>
                 <div className="relative">
-                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
-                    <select
-                        value={selectedCountry}
-                        onChange={(e) => setSelectedCountry(e.target.value)}
-                        className="w-full bg-black/20 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-white appearance-none focus:outline-none focus:border-primary/50 transition-colors"
-                        disabled={loadingCountries}
-                    >
-                        <option value="">Select a country...</option>
-                        {countries.map((c) => (
-                            <option key={c.id} value={c.short_name}>{c.name}</option>
-                        ))}
-                    </select>
+                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5 z-10" />
+                    <input
+                        type="text"
+                        placeholder="Search destination..."
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setIsDropdownOpen(true);
+                            if (e.target.value === '') {
+                                setSelectedCountry('');
+                            }
+                        }}
+                        onFocus={() => setIsDropdownOpen(true)}
+                        className="w-full bg-black/20 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors"
+                    />
+
+                    {/* Dropdown List */}
+                    {isDropdownOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-[#080B1A] border border-white/10 rounded-xl max-h-60 overflow-y-auto z-50 shadow-xl shadow-black/50">
+                            {loadingCountries ? (
+                                <div className="p-4 text-center text-gray-500">Loading countries...</div>
+                            ) : filteredCountries.length > 0 ? (
+                                filteredCountries.map((c) => (
+                                    <button
+                                        key={c.id}
+                                        onClick={() => {
+                                            setSelectedCountry(c.short_name);
+                                            setSearchQuery(c.name);
+                                            setIsDropdownOpen(false);
+                                        }}
+                                        className="w-full text-left px-4 py-3 hover:bg-white/5 text-gray-300 hover:text-white transition-colors flex items-center justify-between group"
+                                    >
+                                        <span>{c.name}</span>
+                                        {selectedCountry === c.short_name && <CheckCircle className="w-4 h-4 text-primary" />}
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="p-4 text-center text-gray-500">No countries found</div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Backdrop to close dropdown */}
+                    {isDropdownOpen && (
+                        <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setIsDropdownOpen(false)}
+                        />
+                    )}
                 </div>
             </div>
 
