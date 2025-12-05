@@ -230,7 +230,7 @@ export default function DashboardPage() {
                             </div>
                         </div>
                         <Link
-                            href="https://chat.whatsapp.com/placeholder"
+                            href="https://chat.whatsapp.com/GFowWIdcI0lAsyidYjQubt"
                             target="_blank"
                             className="animate-shine bg-gradient-to-r from-white via-green-100 to-white text-green-700 p-2.5 rounded-xl shadow-lg shadow-black/20 hover:scale-105 transition-transform active:scale-95 border border-green-100"
                         >
@@ -419,7 +419,7 @@ export default function DashboardPage() {
                             </div>
                         </div>
                         <Link
-                            href="https://chat.whatsapp.com/placeholder"
+                            href="https://chat.whatsapp.com/GFowWIdcI0lAsyidYjQubt"
                             target="_blank"
                             className="group/btn relative overflow-hidden animate-shine bg-gradient-to-r from-white via-green-100 to-white text-green-800 px-8 py-4 rounded-xl font-bold transition-all shadow-xl shadow-green-900/20 hover:shadow-green-500/20 hover:-translate-y-1 border border-green-200"
                         >
