@@ -102,20 +102,10 @@ export default function Footer() {
                     < div >
                         <h3 className="font-bold text-white mb-6">Contact Us</h3>
                         <ul className="space-y-4">
-                            <li className="flex items-start gap-3 text-gray-400 text-sm">
-                                <MapPin className="w-5 h-5 text-primary shrink-0" />
-                                <span>Lagos, Nigeria</span>
-                            </li>
                             <li className="flex items-center gap-3 text-gray-400 text-sm">
                                 <Mail className="w-5 h-5 text-primary shrink-0" />
                                 <a href="mailto:support@acctwave.com" className="hover:text-white transition-colors">
                                     support@acctwave.com
-                                </a>
-                            </li>
-                            <li className="flex items-center gap-3 text-gray-400 text-sm">
-                                <Phone className="w-5 h-5 text-primary shrink-0" />
-                                <a href="tel:+2348000000000" className="hover:text-white transition-colors">
-                                    +234 800 000 0000
                                 </a>
                             </li>
                         </ul>
