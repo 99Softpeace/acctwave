@@ -118,7 +118,12 @@ export async function getProductInfo(productCode: string) {
     const product = MOCK_PRODUCTS[productCode];
 
     if (product) {
-        return { statusCode: 200, data: product };
+        // Apply 40% profit margin
+        const adjustedPrice = Math.ceil(product.price * 1.4);
+        return {
+            statusCode: 200,
+            data: { ...product, price: adjustedPrice }
+        };
     }
 
     // Fallback for unknown codes

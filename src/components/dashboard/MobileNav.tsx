@@ -16,7 +16,7 @@ const sidebarLinks = [
     { name: 'Foreign Numbers', href: '/dashboard/virtual-numbers', icon: Smartphone },
     { name: 'Rent Number', href: '/dashboard/rent-number', icon: Smartphone },
     { name: 'VTU & Bills', href: '/dashboard/vtu', icon: CreditCard },
-    { name: 'Modded Apps', href: '/dashboard/modded-apps', icon: AppWindow },
+    { name: 'Buy Logs', href: '/dashboard/modded-apps', icon: AppWindow },
     { name: 'API Docs', href: '/dashboard/api-docs', icon: FileText },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
