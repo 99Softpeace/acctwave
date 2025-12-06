@@ -26,6 +26,9 @@ export const metadata: Metadata = {
   icons: {
     icon: '/acctwave_logo.png',
   },
+  verification: {
+    google: "JrTNIRXLOjlg2-dbOGBYgiH2L9hNt1RDZt2pBi1Mr2E",
+  },
 };
 
 export default function RootLayout({
