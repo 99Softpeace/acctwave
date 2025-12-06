@@ -25,16 +25,26 @@ export default function TutorialsPage() {
                     transition={{ delay: 0.1 }}
                     className="col-span-1 md:col-span-2 lg:col-span-3 aspect-video bg-[#080B1A] border border-white/10 rounded-2xl overflow-hidden relative group"
                 >
-                    <iframe
-                        width="100%"
-                        height="100%"
-                        src="https://www.youtube.com/embed/dQw4w9WgXcQ?si=FeatureVideoPlaceholder" // Placeholder: Rick Roll for safety, user can replace
-                        title="Platform Overview"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                        className="w-full h-full"
-                    ></iframe>
+                    <a
+                        href="https://youtube.com/@acctwave?si=iIBtZDHNWzEynpaw"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full h-full relative"
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 to-purple-600/10 hover:from-red-600/20 hover:to-purple-600/20 transition-all flex items-center justify-center group">
+                            <div className="text-center p-8">
+                                <Youtube className="w-24 h-24 text-red-500 mx-auto mb-6 group-hover:scale-110 transition-transform duration-300" />
+                                <h2 className="text-3xl font-bold text-white mb-4">Acctwave Official Channel</h2>
+                                <p className="text-lg text-gray-400 mb-8 max-w-lg mx-auto">
+                                    Visit our YouTube channel for detailed tutorials, guides, and updates on how to use Acctwave effectively.
+                                </p>
+                                <span className="inline-flex items-center gap-2 px-8 py-4 bg-red-600 text-white rounded-full font-bold hover:bg-red-700 transition-colors">
+                                    <PlayCircle className="w-6 h-6" />
+                                    Watch Tutorials
+                                </span>
+                            </div>
+                        </div>
+                    </a>
                 </motion.div>
 
                 {/* Placeholder for more videos */}
