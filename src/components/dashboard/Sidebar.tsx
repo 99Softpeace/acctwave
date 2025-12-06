@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, ShoppingBag, Smartphone, Settings, FileText, LogOut, AppWindow, CreditCard, Wallet, Package, Zap, Shield, Rocket, Users, Wifi } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Smartphone, Settings, FileText, LogOut, AppWindow, CreditCard, Wallet, Package, Zap, Shield, Rocket, Users, Wifi, PlayCircle } from 'lucide-react';
+
 import { useSession, signOut } from 'next-auth/react';
 
 const sidebarLinks = [
@@ -15,6 +16,7 @@ const sidebarLinks = [
     { name: 'Buy eSIM', href: '/dashboard/esim', icon: Wifi },
     { name: 'VTU & Bills', href: '/dashboard/vtu', icon: CreditCard },
     { name: 'Buy Logs', href: '/dashboard/buy-logs', icon: AppWindow },
+    { name: 'Tutorials', href: '/dashboard/tutorials', icon: PlayCircle },
     { name: 'API Docs', href: '/dashboard/api-docs', icon: FileText },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
