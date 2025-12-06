@@ -206,7 +206,8 @@ export default function DashboardPage() {
                             </div>
                         </div>
                         <Link
-                            href="/dashboard/buy-logs"
+                            href="https://selar.com/g094vds7c0"
+                            target="_blank"
                             className="bg-white/10 hover:bg-white/20 text-white p-2.5 rounded-xl border border-white/10 transition-colors"
                         >
                             <ArrowUpRight className="w-5 h-5" />
@@ -389,7 +390,8 @@ export default function DashboardPage() {
                             </div>
                         </div>
                         <Link
-                            href="/dashboard/buy-logs"
+                            href="https://selar.com/g094vds7c0"
+                            target="_blank"
                             className="group/btn relative overflow-hidden bg-white/5 hover:bg-white/10 text-white px-8 py-4 rounded-xl font-bold transition-all border border-white/10 hover:border-white/20"
                         >
                             <div className="relative flex items-center gap-3">
