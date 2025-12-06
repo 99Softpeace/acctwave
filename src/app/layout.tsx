@@ -8,6 +8,7 @@ import PageWrapper from "@/components/layout/PageWrapper";
 import { AuthProvider } from "@/context/AuthContext";
 import AuthSessionProvider from "@/components/providers/AuthSessionProvider";
 import { Toaster } from 'react-hot-toast';
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -48,6 +49,7 @@ export default function RootLayout({
             <Toaster position="top-right" />
           </AuthProvider>
         </AuthSessionProvider>
+        <Analytics />
       </body>
     </html>
   );
