@@ -13,10 +13,46 @@ export default function FundWalletPage() {
     const [copied, setCopied] = useState(false);
     const [amount, setAmount] = useState<string | number>('');
     const [processing, setProcessing] = useState(false);
+    const [verifying, setVerifying] = useState(false);
+    const [verificationMessage, setVerificationMessage] = useState('');
 
     useEffect(() => {
         fetchVirtualAccount();
+        checkPendingTransaction();
     }, []);
+
+    const checkPendingTransaction = async () => {
+        const pendingRef = localStorage.getItem('pocketfi_pending_ref');
+        if (!pendingRef) return;
+
+        console.log('Found pending transaction:', pendingRef);
+        setVerifying(true);
+        setVerificationMessage('Verifying your recent payment...');
+
+        try {
+            const res = await fetch(`/api/payment/verify?reference=${pendingRef}`);
+            const data = await res.json();
+
+            if (data.success && data.status === 'completed') {
+                setVerificationMessage('Payment successful! Updating wallet...');
+                localStorage.removeItem('pocketfi_pending_ref');
+                // Allow user to see success message briefly before reload/update
+                setTimeout(() => {
+                    window.location.reload(); // Simple way to refresh balance
+                }, 2000);
+            } else if (data.status === 'failed') {
+                setError(data.message || 'Payment failed.');
+                localStorage.removeItem('pocketfi_pending_ref');
+                setVerifying(false);
+            } else {
+                setVerificationMessage('Payment is still pending. Please wait or check back later.');
+                setTimeout(() => setVerifying(false), 3000);
+            }
+        } catch (err) {
+            console.error('Verification error:', err);
+            setVerifying(false);
+        }
+    };
 
     const fetchVirtualAccount = async () => {
         try {
@@ -63,6 +99,10 @@ export default function FundWalletPage() {
             const data = await res.json();
 
             if (data.success && data.authorization_url) {
+                // Save reference for verification on return
+                if (data.reference) {
+                    localStorage.setItem('pocketfi_pending_ref', data.reference);
+                }
                 window.location.href = data.authorization_url;
             } else {
                 setError(data.message || 'Failed to initiate payment.');
@@ -88,6 +128,13 @@ export default function FundWalletPage() {
                 <h1 className="text-2xl font-bold text-white">Fund Wallet</h1>
                 <p className="text-gray-400 mt-2">Transfer to your dedicated account number below to fund your wallet instantly.</p>
             </div>
+
+            {verifying && (
+                <div className="bg-blue-500/10 border border-blue-500/20 text-blue-400 px-4 py-3 rounded-lg flex items-center gap-2 mb-6 animate-pulse">
+                    <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    {verificationMessage}
+                </div>
+            )}
 
             {error && (
                 <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg flex items-center gap-2">
