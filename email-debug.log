@@ -1,0 +1,27 @@
+2025-12-09T01:13:40.601Z: --- Email Debug ---
+2025-12-09T01:13:40.602Z: Attempting to send email to: 404peaceolowosagba@gmail.com
+2025-12-09T01:13:40.603Z: GMAIL_USER configured: false
+2025-12-09T01:13:40.603Z: GMAIL_PASS configured: false
+2025-12-09T01:13:41.190Z: Error sending email: Error: Missing credentials for "PLAIN"
+2025-12-09T01:14:35.400Z: --- Email Debug ---
+2025-12-09T01:14:35.401Z: Attempting to send email to: 404peaceolowosagba@gmail.com
+2025-12-09T01:14:35.401Z: GMAIL_USER configured: false
+2025-12-09T01:14:35.401Z: GMAIL_PASS configured: false
+2025-12-09T01:14:35.995Z: Error sending email: Error: Missing credentials for "PLAIN"
+2025-12-09T01:24:23.532Z: --- Email Debug ---
+2025-12-09T01:24:23.533Z: Attempting to send email to: 404peaceolowosagba@gmail.com
+2025-12-09T01:24:23.533Z: GMAIL_USER configured: true
+2025-12-09T01:24:23.533Z: GMAIL_PASS configured: true
+2025-12-09T01:24:24.321Z: Error sending email: Error: Invalid login: 534-5.7.9 Application-specific password required. For more information, go to
+534 5.7.9  https://support.google.com/mail/?p=InvalidSecondFactor a640c23a62f3a-b79f4498947sm1200420566b.15 - gsmtp
+2025-12-09T01:26:46.345Z: --- Email Debug ---
+2025-12-09T01:26:46.357Z: Attempting to send email to: 404peaceolowosagba@gmail.com
+2025-12-09T01:26:46.358Z: GMAIL_USER configured: true
+2025-12-09T01:26:46.359Z: GMAIL_PASS configured: true
+2025-12-09T01:26:47.777Z: Error sending email: Error: Invalid login: 534-5.7.9 Application-specific password required. For more information, go to
+534 5.7.9  https://support.google.com/mail/?p=InvalidSecondFactor a640c23a62f3a-b79f4457f9dsm1252006766b.8 - gsmtp
+2025-12-09T01:36:26.404Z: --- Email Debug ---
+2025-12-09T01:36:26.406Z: Attempting to send email to: 404peaceolowosagba@gmail.com
+2025-12-09T01:36:26.406Z: GMAIL_USER configured: true
+2025-12-09T01:36:26.407Z: GMAIL_PASS configured: true
+2025-12-09T01:36:28.410Z: Message sent: <ab30abb0-2e5a-870f-f550-e978aea38e6b@gmail.com>

@@ -1,44 +1,55 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, use } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
+import { Lock, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
 import Image from 'next/image';
-import { signIn } from 'next-auth/react';
 
-export default function LoginPage() {
+export default function ResetPasswordPage({ params }: { params: Promise<{ token: string }> }) {
     const router = useRouter();
+    const resolvedParams = use(params);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
-    const [formData, setFormData] = useState({
-        email: '',
-        password: '',
-    });
+    const [success, setSuccess] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (password !== confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+
         setIsLoading(true);
         setError('');
+        setSuccess('');
 
         try {
-            const result = await signIn('credentials', {
-                email: formData.email,
-                password: formData.password,
-                redirect: false,
+            const res = await fetch('/api/auth/reset-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ token: resolvedParams.token, password }),
             });
 
-            if (result?.error) {
-                setError(result.error);
-                setIsLoading(false);
-            } else {
-                // Success - redirect to dashboard
-                router.push('/dashboard');
-                router.refresh();
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.message || 'Something went wrong');
             }
-        } catch (err) {
-            setError('An error occurred. Please try again.');
+
+            setSuccess('Password reset successfully!');
+            setTimeout(() => {
+                router.push('/login');
+            }, 2000);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
             setIsLoading(false);
         }
     };
@@ -84,48 +95,51 @@ export default function LoginPage() {
                                     <span className="text-2xl font-bold text-white drop-shadow-md">Acctwave</span>
                                 </div>
                             </Link>
-                            <h1 className="text-2xl font-bold text-white mb-2 drop-shadow-md">Welcome Back</h1>
-                            <p className="text-gray-200 text-sm font-medium drop-shadow-sm">Sign in to continue boosting your presence.</p>
+                            <h1 className="text-2xl font-bold text-white mb-2 drop-shadow-md">Reset Password</h1>
+                            <p className="text-gray-200 text-sm font-medium drop-shadow-sm">Enter your new password below</p>
                         </div>
 
-                        <form onSubmit={handleLogin} className="space-y-4">
+                        <form onSubmit={handleSubmit} className="space-y-4">
                             {error && (
                                 <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-center gap-2 text-red-400 text-sm">
                                     <AlertCircle className="w-4 h-4 shrink-0" />
                                     {error}
                                 </div>
                             )}
-                            <div>
-                                <label className="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wider drop-shadow-sm">Email Address</label>
-                                <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                    <input
-                                        type="email"
-                                        required
-                                        value={formData.email}
-                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                        className="w-full bg-transparent border border-white/20 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
-                                        placeholder="john@example.com"
-                                    />
+                            {success && (
+                                <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-xl flex items-center gap-2 text-green-400 text-sm">
+                                    <CheckCircle className="w-4 h-4 shrink-0" />
+                                    {success}
                                 </div>
-                            </div>
-
+                            )}
                             <div>
-                                <div className="flex justify-between items-center mb-1.5">
-                                    <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider drop-shadow-sm">Password</label>
-                                    <Link href="/forgot-password" className="text-xs text-primary hover:text-blue-400 font-medium transition-colors">
-                                        Forgot Password?
-                                    </Link>
-                                </div>
+                                <label className="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wider drop-shadow-sm">New Password</label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                     <input
                                         type="password"
                                         required
-                                        value={formData.password}
-                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
                                         className="w-full bg-transparent border border-white/20 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
                                         placeholder="••••••••"
+                                        minLength={6}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wider drop-shadow-sm">Confirm Password</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <input
+                                        type="password"
+                                        required
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        className="w-full bg-transparent border border-white/20 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+                                        placeholder="••••••••"
+                                        minLength={6}
                                     />
                                 </div>
                             </div>
@@ -139,21 +153,12 @@ export default function LoginPage() {
                                     <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                 ) : (
                                     <>
-                                        Sign In
+                                        Reset Password
                                         <ArrowRight className="w-5 h-5" />
                                     </>
                                 )}
                             </button>
                         </form>
-
-                        <div className="mt-6 text-center">
-                            <p className="text-gray-300 text-sm font-medium drop-shadow-sm">
-                                Don't have an account?{' '}
-                                <Link href="/signup" className="text-primary hover:text-blue-400 font-bold transition-colors">
-                                    Sign Up
-                                </Link>
-                            </p>
-                        </div>
                     </div>
                 </div>
             </motion.div>
