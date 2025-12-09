@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { initializePayment } from '@/lib/pocketfi';
 
 import User from '@/models/User';
+import Transaction from '@/models/Transaction';
 import connectToDatabase from '@/lib/db';
 
 export async function POST(req: Request) {
@@ -38,6 +39,20 @@ export async function POST(req: Request) {
         console.log('Payment Data received:', paymentData);
 
         if (paymentData.status === 'success') {
+            // Create pending transaction
+            await Transaction.create({
+                user: user._id,
+                amount: amount,
+                reference: reference, // Use our generated reference
+                status: 'pending',
+                payment_method: 'pocketfi',
+                type: 'deposit',
+                description: 'Wallet Funding via PocketFi',
+                metadata: {
+                    pocketfi_reference: paymentData.payment_id
+                }
+            });
+
             return NextResponse.json({
                 success: true,
                 authorization_url: paymentData.payment_link,

@@ -7,9 +7,13 @@ import Transaction from '@/models/Transaction';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
+        console.log('--- Payment Callback Received ---');
+        console.log('Payload:', JSON.stringify(body, null, 2));
+
         const { reference, status } = body;
 
         if (!reference) {
+            console.error('Callback missing reference');
             return NextResponse.json({ success: false, message: 'No reference provided' }, { status: 400 });
         }
 
@@ -22,8 +26,11 @@ export async function POST(req: Request) {
             // Find transaction
             const transaction = await Transaction.findOne({ reference });
             if (!transaction) {
+                console.error(`Transaction not found for reference: ${reference}`);
                 return NextResponse.json({ success: false, message: 'Transaction not found' }, { status: 404 });
             }
+
+            console.log(`Transaction found: ${transaction._id}, Status: ${transaction.status}`);
 
             if (transaction.status === 'completed') {
                 return NextResponse.json({ success: true, message: 'Transaction already completed' });
