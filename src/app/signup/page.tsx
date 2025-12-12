@@ -15,13 +15,27 @@ export default function SignupPage() {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
+        phoneNumber: '',
         password: '',
+        confirmPassword: '',
     });
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
+
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match');
+            setIsLoading(false);
+            return;
+        }
+
+        if (!formData.phoneNumber) {
+            setError('Phone number is required');
+            setIsLoading(false);
+            return;
+        }
 
         try {
             // 1. Create user account
@@ -143,6 +157,21 @@ export default function SignupPage() {
                             </div>
 
                             <div>
+                                <label className="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wider drop-shadow-sm">Phone Number</label>
+                                <div className="relative">
+                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <input
+                                        type="tel"
+                                        required
+                                        value={formData.phoneNumber}
+                                        onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                                        className="w-full bg-transparent border border-white/20 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+                                        placeholder="+234..."
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
                                 <label className="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wider drop-shadow-sm">Password</label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -151,6 +180,21 @@ export default function SignupPage() {
                                         required
                                         value={formData.password}
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        className="w-full bg-transparent border border-white/20 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+                                        placeholder="••••••••"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wider drop-shadow-sm">Confirm Password</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <input
+                                        type="password"
+                                        required
+                                        value={formData.confirmPassword}
+                                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                                         className="w-full bg-transparent border border-white/20 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
                                         placeholder="••••••••"
                                     />

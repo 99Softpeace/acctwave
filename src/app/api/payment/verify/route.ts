@@ -69,7 +69,13 @@ export async function GET(req: Request) {
 
             // Re-fetch user to get latest balance
             const freshUser = await User.findById(user._id);
-            freshUser.balance += transaction.amount;
+
+            const addAmount = Number(transaction.amount); // Explicit cast
+            console.log(`[VERIFY] Updating balance for user ${user.email}. Old: ${freshUser.balance}, Adding: ${addAmount}`);
+
+            freshUser.balance = Number(freshUser.balance) + addAmount;
+            console.log(`[VERIFY] New Balance: ${freshUser.balance}`);
+
             await freshUser.save();
 
             return NextResponse.json({

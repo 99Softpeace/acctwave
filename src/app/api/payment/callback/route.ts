@@ -43,7 +43,12 @@ export async function POST(req: Request) {
             // Credit user wallet
             const user = await User.findById(transaction.user);
             if (user) {
-                user.balance += transaction.amount;
+                const addAmount = Number(transaction.amount); // Explicit cast
+                console.log(`[WEBHOOK] Updating balance for user ${user.email}. Old: ${user.balance}, Adding: ${addAmount}`);
+
+                user.balance = Number(user.balance) + addAmount;
+                console.log(`[WEBHOOK] New Balance: ${user.balance}`);
+
                 await user.save();
             }
 

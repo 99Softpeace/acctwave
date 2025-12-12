@@ -5,10 +5,10 @@ import User from '@/models/User';
 
 export async function POST(req: Request) {
     try {
-        const { name, email, password } = await req.json();
+        const { name, email, phoneNumber, password } = await req.json();
 
         // Validate input
-        if (!name || !email || !password) {
+        if (!name || !email || !phoneNumber || !password) {
             return NextResponse.json(
                 { message: 'Please provide all required fields' },
                 { status: 400 }
@@ -24,11 +24,14 @@ export async function POST(req: Request) {
 
         await dbConnect();
 
-        // Check if user already exists
-        const existingUser = await User.findOne({ email });
+        // Check if user already exists (email or phone)
+        const existingUser = await User.findOne({
+            $or: [{ email }, { phoneNumber }]
+        });
+
         if (existingUser) {
             return NextResponse.json(
-                { message: 'User with this email already exists' },
+                { message: 'User with this email or phone number already exists' },
                 { status: 400 }
             );
         }
@@ -40,6 +43,7 @@ export async function POST(req: Request) {
         const user = await User.create({
             name,
             email,
+            phoneNumber,
             password: hashedPassword,
             balance: 0, // Start with 0 balance
             role: 'user',
