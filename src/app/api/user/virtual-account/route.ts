@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import { authOptions } from '@/lib/auth';
+import { createVirtualAccount } from '@/lib/pocketfi';
 
 export async function GET(req: Request) {
     try {
@@ -29,27 +30,44 @@ export async function GET(req: Request) {
             });
         }
 
-        // Generate a mock virtual account (PocketFi Simulation)
-        // Since the real API is down, we simulate this feature for the project demo.
-        const mockAccount = {
-            bankName: 'PocketFi Bank',
-            accountNumber: '9' + Math.floor(Math.random() * 1000000000).toString().padStart(9, '0'), // Starts with 9, 10 digits
-            accountName: user.name
-        };
+        // Generate a real dedicated virtual account
+        console.log(`Creating virtual account for ${user.email}`);
 
-        // Save to user
-        user.virtualAccount = mockAccount;
-        await user.save();
+        // Ensure phone number exists (fallback if missing)
+        const phoneNumber = user.phoneNumber || `080${Math.floor(Math.random() * 90000000 + 10000000)}`;
 
-        return NextResponse.json({
-            success: true,
-            data: mockAccount
-        });
+        const dvaResponse = await createVirtualAccount(user.email, user.name, phoneNumber);
+
+        if (dvaResponse.status === 'success' || dvaResponse.success) {
+            const accountData = dvaResponse.data;
+
+            // Map API response to our schema
+            const newAccount = {
+                bankName: accountData.bank_name || accountData.bank || 'PocketFi Bank',
+                accountNumber: accountData.account_number || accountData.number,
+                accountName: accountData.account_name || user.name
+            };
+
+            // Save to user
+            user.virtualAccount = newAccount;
+            await user.save();
+
+            return NextResponse.json({
+                success: true,
+                data: newAccount
+            });
+        } else {
+            console.error('PocketFi Create Account Failed:', dvaResponse);
+            throw new Error(dvaResponse.message || JSON.stringify(dvaResponse));
+        }
 
     } catch (error: any) {
         console.error('Error fetching virtual account:', error);
         return NextResponse.json(
-            { message: error.message || 'Internal server error' },
+            {
+                message: error.message || 'Internal server error',
+                details: error.toString()
+            },
             { status: 500 }
         );
     }

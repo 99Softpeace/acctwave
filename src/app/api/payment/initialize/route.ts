@@ -56,7 +56,7 @@ export async function POST(req: Request) {
             return NextResponse.json({
                 success: true,
                 authorization_url: paymentData.payment_link,
-                reference: paymentData.payment_id
+                reference: reference // Return internal reference for tracking
             });
         } else {
             console.error('Payment initialization failed or invalid response:', paymentData);

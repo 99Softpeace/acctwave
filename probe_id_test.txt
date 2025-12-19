@@ -1,0 +1,18 @@
+Started ID Probe
+Env Bus ID: 29663
+Key Prefix ID: 10543
+
+--- Testing: Env ID (Number) ---
+Payload: {"first_name":"Test","last_name":"Probe","email":"probe@test.com","phone":"08012345678","type":"static","businessId":29663,"bank":"090267","reference":"IDTEST-1766107223628A","tx_ref":"IDTEST-1766107223628A"}
+❌ FAILED: 500
+Msg: Server Error
+
+--- Testing: Key Prefix ID (Number) ---
+Payload: {"first_name":"Test","last_name":"Probe","email":"probe@test.com","phone":"08012345678","type":"static","businessId":10543,"bank":"090267","reference":"IDTEST-1766107223628B","tx_ref":"IDTEST-1766107223628B"}
+❌ FAILED: 422
+Msg: The selected business id is invalid.
+
+--- Testing: Env ID (String) ---
+Payload: {"first_name":"Test","last_name":"Probe","email":"probe@test.com","phone":"08012345678","type":"static","businessId":"29663","bank":"090267","reference":"IDTEST-1766107223628C","tx_ref":"IDTEST-1766107223628C"}
+❌ FAILED: 500
+Msg: Server Error

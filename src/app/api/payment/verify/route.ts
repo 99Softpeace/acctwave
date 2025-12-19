@@ -55,7 +55,10 @@ export async function GET(req: Request) {
 
         // If pending, verify with PocketFi
         console.log(`Verifying pending transaction: ${reference}`);
-        const verification = await verifyPayment(reference);
+
+        // Use the PocketFi reference from metadata if available, otherwise fallback to the transaction reference
+        const pocketFiRef = transaction.metadata?.pocketfi_reference || reference;
+        const verification = await verifyPayment(pocketFiRef);
 
         if (verification.status && verification.data.status === 'successful') {
             // Update transaction

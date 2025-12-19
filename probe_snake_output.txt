@@ -1,0 +1,11 @@
+Started Probe
+
+--- Testing: Snake Case business_id ---
+Payload: {"first_name":"Test","last_name":"Probe","email":"probe@test.com","phone":"08012345678","type":"static","business_id":"29663","bank":"090267","reference":"SNAKE-1766107169407A","tx_ref":"SNAKE-1766107169407A"}
+❌ FAILED: 422
+Msg: The business id field is required.
+
+--- Testing: Both Cases ---
+Payload: {"first_name":"Test","last_name":"Probe","email":"probe@test.com","phone":"08012345678","type":"static","business_id":"29663","businessId":"29663","bank":"090267","reference":"SNAKE-1766107169407B","tx_ref":"SNAKE-1766107169407B"}
+❌ FAILED: 500
+Msg: Server Error

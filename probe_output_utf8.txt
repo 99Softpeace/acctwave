@@ -1,0 +1,35 @@
+Probe Results (2025-12-14T21:29:26.845Z)
+Base URL (Configured): https://api.pocketfi.ng/api/v1
+
+❌ https://api.pocketfi.ng/api/v1/accounts/create: 404 Not Found
+❌ https://api.pocketfi.ng/api/v1/accounts: 404 Not Found
+❌ https://api.pocketfi.ng/api/v1/create-dedicated-account: 404 Not Found
+❌ https://api.pocketfi.ng/api/v1/virtual-account/create: 404 Not Found
+❌ https://api.pocketfi.ng/api/v1/wallet/create-virtual: 404 Not Found
+✅ https://api.pocketfi.ng/api/v1/checkout/request: STATUS 401 (Route Exists!)
+Data: {"message":"Unauthenticated."}
+❌ https://api.pocketfi.ng/api/v1/api/checkout/request: 404 Not Found
+
+--- Testing Hardcoded Base URLs ---
+❌ https://api.pocketfi.ng/api/v1/accounts/create: 404 Not Found
+❌ https://api.pocketfi.ng/api/v1/accounts: 404 Not Found
+❌ https://api.pocketfi.ng/api/v1/create-dedicated-account: 404 Not Found
+❌ https://api.pocketfi.ng/api/v1/virtual-account/create: 404 Not Found
+❌ https://api.pocketfi.ng/api/v1/wallet/create-virtual: 404 Not Found
+✅ https://api.pocketfi.ng/api/v1/checkout/request: STATUS 401 (Route Exists!)
+Data: {"message":"Unauthenticated."}
+❌ https://api.pocketfi.ng/api/v1/api/checkout/request: 404 Not Found
+❌ https://api.pocketfi.ng/v1/accounts/create: 404 Not Found
+❌ https://api.pocketfi.ng/v1/accounts: 404 Not Found
+❌ https://api.pocketfi.ng/v1/create-dedicated-account: 404 Not Found
+❌ https://api.pocketfi.ng/v1/virtual-account/create: 404 Not Found
+❌ https://api.pocketfi.ng/v1/wallet/create-virtual: 404 Not Found
+❌ https://api.pocketfi.ng/v1/checkout/request: 404 Not Found
+❌ https://api.pocketfi.ng/v1/api/checkout/request: 404 Not Found
+❌ https://api.pocketfi.ng/accounts/create: 404 Not Found
+❌ https://api.pocketfi.ng/accounts: 404 Not Found
+❌ https://api.pocketfi.ng/create-dedicated-account: 404 Not Found
+❌ https://api.pocketfi.ng/virtual-account/create: 404 Not Found
+❌ https://api.pocketfi.ng/wallet/create-virtual: 404 Not Found
+❌ https://api.pocketfi.ng/checkout/request: 404 Not Found
+❌ https://api.pocketfi.ng/api/checkout/request: 404 Not Found

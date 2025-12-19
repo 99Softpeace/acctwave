@@ -1,0 +1,11 @@
+Started Type Probe
+
+--- Testing: Dynamic Account ---
+Payload: {"first_name":"Test","last_name":"Probe","email":"probe@test.com","phone":"08012345678","type":"dynamic","businessId":29663,"reference":"TYPE-1766107286813A","tx_ref":"TYPE-1766107286813A"}
+❌ FAILED: 422
+Msg: The bank field is required.
+
+--- Testing: Static Invalid Bank ---
+Payload: {"first_name":"Test","last_name":"Probe","email":"probe@test.com","phone":"08012345678","type":"static","businessId":29663,"bank":"000000","reference":"TYPE-1766107286813B","tx_ref":"TYPE-1766107286813B"}
+❌ FAILED: 500
+Msg: Server Error

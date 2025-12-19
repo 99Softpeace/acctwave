@@ -1,0 +1,16 @@
+Started Dynamic Bank Probe
+
+--- Testing: Dynamic + Kuda ---
+Payload: {"first_name":"Test","last_name":"Probe","email":"probe@test.com","phone":"08012345678","type":"dynamic","businessId":29663,"bank":"090267","reference":"DB-1766107344437A","tx_ref":"DB-1766107344437A"}
+❌ FAILED: 500
+Msg: Server Error
+
+--- Testing: Dynamic + Wema ---
+Payload: {"first_name":"Test","last_name":"Probe","email":"probe@wema.com","phone":"08012345678","type":"dynamic","businessId":29663,"bank":"000017","reference":"DB-1766107344437B","tx_ref":"DB-1766107344437B"}
+❌ FAILED: 500
+Msg: Server Error
+
+--- Testing: Static + Wema ---
+Payload: {"first_name":"Test","last_name":"Probe","email":"probe@wema.com","phone":"08012345678","type":"static","businessId":29663,"bank":"000017","reference":"DB-1766107344437C","tx_ref":"DB-1766107344437C"}
+❌ FAILED: 500
+Msg: Server Error

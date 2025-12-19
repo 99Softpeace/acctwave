@@ -63,3 +63,54 @@ export async function verifyPayment(reference: string) {
 
     return response.json();
 }
+
+export async function createVirtualAccount(email: string, name: string, phoneNumber: string) {
+    const url = `${BASE_URL}/virtual-accounts/create`;
+    console.log(`PocketFi: Creating DVA at ${url}`);
+
+    // Split name for potential API requirements
+    const nameParts = name.split(' ');
+    const firstName = nameParts[0] || 'User';
+    const lastName = nameParts.slice(1).join(' ') || 'Customer';
+
+    const txRef = `VA-${Date.now()}`; // Generate a ref similar to route
+
+    const payload = {
+        first_name: firstName,
+        last_name: lastName,
+        phone: phoneNumber,
+        email: email,
+        type: "static",
+        businessId: Number(process.env.POCKETFI_BUSINESS_ID),
+        bank: "090267",
+        reference: txRef,
+        tx_ref: txRef,
+        bvn: ""
+    };
+
+    console.log('--- POCKETFI DVA PAYLOAD START ---');
+    console.log(JSON.stringify(payload, null, 2));
+    console.log('--- POCKETFI DVA PAYLOAD END ---');
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${process.env.POCKETFI_SECRET_KEY || POCKETFI_API_KEY}`, // Uses Secret Key for server-side ops
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    });
+
+    const responseData = await response.json();
+    console.log('--- POCKETFI DVA RESPONSE START ---');
+    console.log(JSON.stringify(responseData, null, 2));
+    console.log('--- POCKETFI DVA RESPONSE END ---');
+
+    if (!response.ok) {
+        console.error(`PocketFi API Error (${response.status}):`, responseData);
+        throw new Error(`Failed to create virtual account: ${response.status} - ${responseData.message || JSON.stringify(responseData)}`);
+    }
+
+    return responseData;
+}

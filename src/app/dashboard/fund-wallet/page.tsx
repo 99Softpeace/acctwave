@@ -2,22 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { Copy, CreditCard, AlertCircle, CheckCircle } from 'lucide-react';
+import { CreditCard, AlertCircle, RefreshCw, Smartphone } from 'lucide-react';
 import TransactionHistory from '@/components/dashboard/TransactionHistory';
 
 export default function FundWalletPage() {
     const { data: session } = useSession();
-    const [loading, setLoading] = useState(true);
-    const [virtualAccount, setVirtualAccount] = useState<any>(null);
-    const [error, setError] = useState('');
-    const [copied, setCopied] = useState(false);
-    const [amount, setAmount] = useState<string | number>('');
+    const [amount, setAmount] = useState<string>('');
     const [processing, setProcessing] = useState(false);
     const [verifying, setVerifying] = useState(false);
+    const [error, setError] = useState('');
     const [verificationMessage, setVerificationMessage] = useState('');
 
     useEffect(() => {
-        fetchVirtualAccount();
         checkPendingTransaction();
     }, []);
 
@@ -36,17 +32,16 @@ export default function FundWalletPage() {
             if (data.success && data.status === 'completed') {
                 setVerificationMessage('Payment successful! Updating wallet...');
                 localStorage.removeItem('pocketfi_pending_ref');
-                // Allow user to see success message briefly before reload/update
                 setTimeout(() => {
-                    window.location.reload(); // Simple way to refresh balance
+                    window.location.reload();
                 }, 2000);
             } else if (data.status === 'failed') {
                 setError(data.message || 'Payment failed.');
                 localStorage.removeItem('pocketfi_pending_ref');
                 setVerifying(false);
             } else {
-                setVerificationMessage('Payment is still pending. Please wait or check back later.');
-                setTimeout(() => setVerifying(false), 3000);
+                setVerificationMessage('Payment is processing. Your balance will update automatically once confirmed.');
+                setTimeout(() => setVerifying(false), 4000);
             }
         } catch (err) {
             console.error('Verification error:', err);
@@ -54,84 +49,54 @@ export default function FundWalletPage() {
         }
     };
 
-    const fetchVirtualAccount = async () => {
-        try {
-            const res = await fetch('/api/user/virtual-account');
-            const data = await res.json();
-            if (data.success) {
-                setVirtualAccount(data.data);
-            } else {
-                setError(data.message || 'Failed to load virtual account');
-            }
-        } catch (err) {
-            setError('Failed to load virtual account');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
-    const handlePayment = async () => {
+    const handlePayment = async (e: React.FormEvent) => {
+        e.preventDefault();
         const amountValue = Number(amount);
         if (!amountValue || amountValue < 100) {
             setError('Minimum funding amount is ₦100.');
             return;
         }
+
         setProcessing(true);
         setError('');
 
         try {
             const res = await fetch('/api/payment/initialize', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    amount,
+                    amount: amountValue,
                     email: session?.user?.email
                 }),
             });
             const data = await res.json();
 
             if (data.success && data.authorization_url) {
-                // Save reference for verification on return
                 if (data.reference) {
                     localStorage.setItem('pocketfi_pending_ref', data.reference);
                 }
+                // Redirect to PocketFi Checkout
                 window.location.href = data.authorization_url;
             } else {
                 setError(data.message || 'Failed to initiate payment.');
+                setProcessing(false);
             }
         } catch (err) {
-            setError('An error occurred while initiating payment.');
-        } finally {
+            setError('An error occurred. Please check your connection.');
             setProcessing(false);
         }
     };
-
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center min-h-[400px]">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-            </div>
-        );
-    }
 
     return (
         <div className="max-w-4xl mx-auto space-y-8">
             <div>
                 <h1 className="text-2xl font-bold text-white">Fund Wallet</h1>
-                <p className="text-gray-400 mt-2">Transfer to your dedicated account number below to fund your wallet instantly.</p>
+                <p className="text-gray-400 mt-2">Add funds to purchase data, airtime, and other services.</p>
             </div>
 
             {verifying && (
-                <div className="bg-blue-500/10 border border-blue-500/20 text-blue-400 px-4 py-3 rounded-lg flex items-center gap-2 mb-6 animate-pulse">
-                    <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                <div className="bg-blue-500/10 border border-blue-500/20 text-blue-400 px-4 py-3 rounded-lg flex items-center gap-2 animate-pulse">
+                    <RefreshCw className="w-5 h-5 animate-spin" />
                     {verificationMessage}
                 </div>
             )}
@@ -144,35 +109,39 @@ export default function FundWalletPage() {
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Online Payment Card */}
-                <div className="glass-card p-8 rounded-2xl border border-white/10">
+                {/* Payment Form */}
+                <div className="glass-card p-6 rounded-2xl border border-white/10">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-3 bg-green-500/10 rounded-lg">
                             <CreditCard className="w-6 h-6 text-green-400" />
                         </div>
                         <div>
                             <h2 className="text-lg font-semibold text-white">Online Payment</h2>
-                            <p className="text-sm text-gray-400">Instant funding via Card / Transfer</p>
+                            <p className="text-sm text-gray-400">Instant funding via Card/Transfer</p>
                         </div>
                     </div>
 
-                    <div className="space-y-6">
+                    <form onSubmit={handlePayment} className="space-y-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-400 mb-2">Amount (₦)</label>
-                            <input
-                                type="number"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                                placeholder="Enter amount (min 100)"
-                                min="100"
-                            />
+                            <label className="text-sm font-medium text-gray-300 block mb-2">Amount to Fund (₦)</label>
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">₦</span>
+                                <input
+                                    type="number"
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    placeholder="e.g. 5000"
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                                    min="100"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2">Minimum amount: ₦100</p>
                         </div>
 
                         <button
-                            onClick={handlePayment}
-                            disabled={processing || Number(amount) < 100}
-                            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2"
+                            type="submit"
+                            disabled={processing || verifying}
+                            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-600/50 text-white font-medium py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
                         >
                             {processing ? (
                                 <>
@@ -180,80 +149,36 @@ export default function FundWalletPage() {
                                     Processing...
                                 </>
                             ) : (
-                                'Pay Now'
+                                'Proceed to Pay'
                             )}
                         </button>
-
-                        <div className="flex items-start gap-3 text-sm text-gray-400 bg-green-500/10 p-4 rounded-lg border border-green-500/20">
-                            <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                            <p>
-                                Secured by PocketFi. Your wallet will be credited instantly after payment.
-                            </p>
-                        </div>
-                    </div>
+                    </form>
                 </div>
 
-                {/* Virtual Account Card */}
-                <div className="glass-card p-8 rounded-2xl border border-white/10">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-indigo-500/10 rounded-lg">
-                            <Copy className="w-6 h-6 text-indigo-400" />
+                {/* Info Card */}
+                <div className="glass-card p-6 rounded-2xl border border-white/10 flex flex-col justify-center space-y-6">
+                    <div className="flex items-start gap-4">
+                        <div className="p-2 bg-indigo-500/10 rounded-lg">
+                            <Smartphone className="w-5 h-5 text-indigo-400" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-semibold text-white">Bank Transfer</h2>
-                            <p className="text-sm text-gray-400">Dedicated virtual account</p>
+                            <h3 className="text-white font-medium">Instant Credit</h3>
+                            <p className="text-sm text-gray-400 mt-1">Your wallet is credited immediately after successful payment.</p>
                         </div>
                     </div>
-
-                    {virtualAccount ? (
-                        <div className="space-y-6">
-                            <div className="bg-white/5 rounded-xl p-6 space-y-6 border border-white/10">
-                                <div>
-                                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Bank Name</label>
-                                    <p className="text-xl font-semibold text-white mt-1">{virtualAccount.bankName}</p>
-                                </div>
-
-                                <div>
-                                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Account Number</label>
-                                    <div className="flex items-center gap-3 mt-1">
-                                        <p className="text-3xl font-mono font-bold text-indigo-400 tracking-wider">
-                                            {virtualAccount.accountNumber}
-                                        </p>
-                                        <button
-                                            onClick={() => copyToClipboard(virtualAccount.accountNumber)}
-                                            className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                                            title="Copy Account Number"
-                                        >
-                                            {copied ? <CheckCircle className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-gray-400" />}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Account Name</label>
-                                    <p className="text-lg font-medium text-white mt-1">{virtualAccount.accountName}</p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start gap-3 text-sm text-gray-400 bg-blue-500/10 p-4 rounded-lg border border-blue-500/20">
-                                <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                                <p>
-                                    Transfers to this account are automatically credited to your wallet.
-                                    Please allow 1-5 minutes for the transaction to reflect.
-                                </p>
-                            </div>
+                    <div className="flex items-start gap-4">
+                        <div className="p-2 bg-indigo-500/10 rounded-lg">
+                            <CreditCard className="w-5 h-5 text-indigo-400" />
                         </div>
-                    ) : (
-                        <div className="text-center py-8">
-                            <p className="text-gray-500">Generating your dedicated account...</p>
+                        <div>
+                            <h3 className="text-white font-medium">Multiple Methods</h3>
+                            <p className="text-sm text-gray-400 mt-1">Pay via Bank Transfer, Card, or USSD securely.</p>
                         </div>
-                    )}
-                </div>
-
-                <div className="lg:col-span-2 space-y-6">
-                    <TransactionHistory />
+                    </div>
                 </div>
             </div>
+
+            <TransactionHistory />
         </div>
     );
 }

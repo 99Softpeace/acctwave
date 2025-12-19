@@ -1,0 +1,20 @@
+Started Support Probe
+
+--- Testing Checkout (Screenshot Style) (/checkout/request) ---
+Payload: {"first_name":"Test","last_name":"Probe","email":"probe@test.com","phone":"09065903789","business_id":"29663","amount":"100","redirect_link":"https://example.com"}
+✅ SUCCESS: 200
+{
+  "status": "success",
+  "payment_id": "PFI|7000433517",
+  "payment_link": "https://pocketfi.ng/checkout/PFI|7000433517"
+}
+
+--- Testing Checkout (Screenshot ID) (/checkout/request) ---
+Payload: {"first_name":"Test","last_name":"Probe","email":"probe@test.com","phone":"09065903789","business_id":"29492","amount":"100","redirect_link":"https://example.com"}
+❌ FAILED: 404
+Msg: Unable to create account number. We will fix this soon.
+
+--- Testing Virtual Account (Screenshot details) (/virtual-accounts/create) ---
+Payload: {"first_name":"Test","last_name":"Probe","email":"probe@test.com","phone":"09065903789","type":"static","business_id":"29492","bank":"090267","reference":"SUP-1766107741722","tx_ref":"SUP-1766107741722"}
+❌ FAILED: 422
+Msg: The business id field is required.

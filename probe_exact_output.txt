@@ -1,0 +1,22 @@
+Starting Exhaustive Probe...
+Trying: https://api.pocketfi.ng/api/v1/accounts/create_dedicated_account
+❌ 404 Not Found at https://api.pocketfi.ng/api/v1/accounts/create_dedicated_account
+Trying: https://api.pocketfi.ng/api/v1/accounts/create-dedicated-account
+❌ 404 Not Found at https://api.pocketfi.ng/api/v1/accounts/create-dedicated-account
+Trying: https://api.pocketfi.ng/api/v1/create_dedicated_account
+❌ 404 Not Found at https://api.pocketfi.ng/api/v1/create_dedicated_account
+Trying: https://api.pocketfi.ng/api/v1/accounts/dedicated
+❌ 404 Not Found at https://api.pocketfi.ng/api/v1/accounts/dedicated
+Trying: https://api.pocketfi.ng/v1/accounts/create_dedicated_account
+❌ 404 Not Found at https://api.pocketfi.ng/v1/accounts/create_dedicated_account
+Trying: https://api.pocketfi.ng/api/v1/accounts/create_dedicated_account
+❌ 404 Not Found at https://api.pocketfi.ng/api/v1/accounts/create_dedicated_account
+Trying: https://api.pocketfi.ng/accounts/create_dedicated_account
+❌ 404 Not Found at https://api.pocketfi.ng/accounts/create_dedicated_account
+Trying: https://api.pocketfi.ng/api/v1/virtual-accounts
+❌ 404 Not Found at https://api.pocketfi.ng/api/v1/virtual-accounts
+Trying: https://api.pocketfi.ng/api/v1/accounts/virtual
+❌ 404 Not Found at https://api.pocketfi.ng/api/v1/accounts/virtual
+Trying: https://api.pocketfi.ng/api/v1/accounts/create
+❌ 404 Not Found at https://api.pocketfi.ng/api/v1/accounts/create
+Probe finished.
