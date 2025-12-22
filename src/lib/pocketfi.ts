@@ -17,7 +17,9 @@ export async function initializePayment(email: string, amount: number, reference
         business_id: businessId,
         email: email,
         amount: amount.toString(), // API expects string
-        redirect_link: `${process.env.NEXTAUTH_URL}/dashboard/fund-wallet` // Required by API
+        redirect_link: `${process.env.NEXTAUTH_URL}/dashboard/fund-wallet`, // Required by API
+        tx_ref: reference, // FIX: Send our reference
+        reference: reference // FIX: Send our reference (PocketFi sometimes uses this alias)
     };
 
     console.log('--- POCKETFI PAYLOAD START ---');
