@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
         // 1. Read Raw Body
         const rawBody = await req.text();
-        const signatureHeader = req.headers.get('x-pocketfi-signature');
+        const signatureHeader = req.headers.get('x-pocketfi-signature') || req.headers.get('pocketfi_signature');
 
         // LOGGING
         await DebugLog.create({
@@ -76,7 +76,13 @@ export async function POST(req: Request) {
         // Format A: { event: '...', data: { amount: ... } }
         // Format B: { order: { amount: ... }, customer: ... } (Virtual Accounts?)
         const data = body.data || body.order || body;
-        const reference = data.reference || data.tx_ref || data.id; // Sometimes 'id' is the ref
+
+        // FIX: Reference might be in body.transaction.reference (DVA format)
+        let reference = data.reference || data.tx_ref || data.id;
+        if (!reference && body.transaction && body.transaction.reference) {
+            reference = body.transaction.reference;
+        }
+
         const amount = Number(data.amount || data.settlement_amount);
 
         // 3. Handle Missing Signature (Relaxed Mode for Debugging/Production Fix)
