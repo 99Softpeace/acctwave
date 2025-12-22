@@ -18,7 +18,8 @@ export async function GET() {
         // @ts-ignore
         const user = await User.findById(session.user.id).select('isSuspended email');
 
-        console.log(`[Status API Debug] Check User ${session.user.email} (${session.user.id})`);
+        // @ts-ignore
+        console.log(`[Status API Debug] Check User ${session.user.email} (${(session.user as any).id})`);
         console.log(`[Status API Debug] Found DB User:`, user);
         console.log(`[Status API Debug] user.isSuspended value:`, user?.isSuspended);
 
