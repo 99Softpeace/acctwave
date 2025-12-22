@@ -36,15 +36,29 @@ export async function POST(req: Request) {
         const rawBody = await req.text();
         const signatureHeader = req.headers.get('x-pocketfi-signature');
 
-        // TEMPORARY: Skip signature verification for debugging
-        // TODO: RE-ENABLE THIS AFTER DEBUGGING
-        /*
+        // LOGGING: Persist to DB for debugging
+        await dbConnect();
+        const DebugLog = (await import('@/models/DebugLog')).default;
+
+        await DebugLog.create({
+            source: 'pocketfi-webhook',
+            type: 'request',
+            message: 'Incoming Webhook Hit',
+            metadata: {
+                headers: Object.fromEntries(req.headers),
+                signature: signatureHeader,
+                body: rawBody // Save raw string to avoid parse errors blocking log
+            }
+        });
+
+        // 2. Verify Signature
         if (!verifySignature(rawBody, signatureHeader, SIGNING_SECRET)) {
+            await DebugLog.create({ source: 'pocketfi-webhook', type: 'error', message: 'Signature Mismatch', metadata: { header: signatureHeader } });
             console.warn('Webhook signature verification failed');
             return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
         }
-        */
-        console.log('[DEBUG] Signature check SKIPPED for testing');
+
+        console.log('[DEBUG] Signature Verified Successfully');
 
         const body = JSON.parse(rawBody);
         console.log('[PocketFi Webhook] Verified Payload:', JSON.stringify(body, null, 2));
@@ -54,15 +68,30 @@ export async function POST(req: Request) {
         // PocketFi events: 'payment.success', 'transfer.success', 'charge.success'
         if (['payment.success', 'transfer.success', 'charge.success'].includes(event)) {
             const data = body.data || body;
-
-            // Strategy:
-            // 1. Try finding transaction by Reference (Checkout / One-time payment)
-            // 2. Try finding user by Virtual Account Number (Dedicated Account)
-
             const reference = data.reference || data.tx_ref;
             const amount = Number(data.amount);
 
             console.log(`[PocketFi Webhook] Processing ${event} for ref: ${reference}`);
+
+            // STEP 3: Verify transaction via PocketFi API (Double Check)
+            try {
+                const { verifyPayment } = await import('@/lib/pocketfi');
+                const verification = await verifyPayment(reference);
+
+                console.log(`[PocketFi Verification] API Check for ${reference}:`, verification.status);
+
+                if (verification.status !== 'successful' && verification.data?.status !== 'successful') {
+                    console.error(`[PocketFi Webhook] Verification Failed. API says: ${verification.status}`);
+                    await DebugLog.create({ source: 'pocketfi-webhook', type: 'error', message: 'API Verification Failed', metadata: { reference, verification } });
+                    // We return 200 to ACK receipt, but do NOT credit user
+                    return NextResponse.json({ status: 'ignored' }, { status: 200 });
+                }
+            } catch (verifyErr: any) {
+                console.error('[PocketFi Webhook] Verify API call failed:', verifyErr.message);
+                // Fail safe: If API check fails, do NOT process payment.
+                await DebugLog.create({ source: 'pocketfi-webhook', type: 'error', message: 'API Call Failed', metadata: { error: verifyErr.message } });
+                return NextResponse.json({ status: 'ignored' }, { status: 200 });
+            }
 
             await dbConnect();
 
