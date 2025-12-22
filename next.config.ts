@@ -1,6 +1,8 @@
 
-
 const nextConfig = {
+  // CRITICAL: Prevent 307 redirects that break webhooks
+  skipTrailingSlashRedirect: true,
+
   /* config options here */
   async headers() {
     return [
