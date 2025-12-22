@@ -82,10 +82,22 @@ export async function POST(req: Request) {
             }
             // CASE B: Dedicated Virtual Account (No pre-created transaction likely)
             else {
-                const accountNumber = data.destination_account_number || data.account_number;
-                if (accountNumber) {
-                    console.log(`Looking up user by Account: ${accountNumber}`);
+                console.log('[PocketFi Webhook] Transaction not found, trying DVA lookup...');
+                const rawAccount = data.destination_account_number || data.account_number;
+
+                if (rawAccount) {
+                    const accountNumber = String(rawAccount).trim(); // Ensure string and no spaces
+                    console.log(`[PocketFi Webhook] Looking up User by Account Number: "${accountNumber}"`);
+
                     user = await User.findOne({ 'virtualAccount.accountNumber': accountNumber });
+
+                    if (user) {
+                        console.log(`[PocketFi Webhook] User Found: ${user.email} (Current Balance: ${user.balance})`);
+                    } else {
+                        console.error(`[PocketFi Webhook] NO USER FOUND with Account Number: "${accountNumber}"`);
+                    }
+                } else {
+                    console.error('[PocketFi Webhook] No account number found in payload for DVA lookup');
                 }
             }
 
