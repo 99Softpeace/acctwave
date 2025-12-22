@@ -14,16 +14,21 @@ if (!SECRET) {
 
 // Payload simulating a transfer success
 const payload = {
-    event: 'transfer.success',
-    data: {
-        reference: `TEST-${Date.now()}`,
-        amount: 500,
-        currency: "NGN",
-        destination_account_number: TEST_ACCOUNT_NUMBER, // Key field for DVA lookup
-        account_number: "1234567890", // Sender details
-        bank_name: "Test Bank",
-        sender_name: "Debug Script",
-        created_at: new Date().toISOString()
+    event: 'transfer.success', // or just implict from structure
+    // Emulating the structure from the logs
+    order: {
+        amount: "500.00",
+        settlement_amount: 498.2,
+        fee: 1.8,
+        description: "Test Transfer via Script"
+    },
+    transaction: {
+        reference: `PFI|TEST-${Date.now()}`
+    },
+    account_number: "1934847251", // Example account
+    customer: {
+        id: 123,
+        email: "test@example.com"
     }
 };
 

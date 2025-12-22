@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     try {
         // 1. Read Raw Body
         const rawBody = await req.text();
-        const signatureHeader = req.headers.get('x-pocketfi-signature');
+        const signatureHeader = req.headers.get('x-pocketfi-signature') || req.headers.get('pocketfi_signature');
 
         // LOGGING: Persist to DB for debugging
         await dbConnect();
@@ -53,6 +53,17 @@ export async function POST(req: Request) {
 
         // 2. Verify Signature
         if (!verifySignature(rawBody, signatureHeader, SIGNING_SECRET)) {
+            // RELAXED CHECK: If it's a verification ping (missing amount/reference), allow it.
+            const tempBody = JSON.parse(rawBody);
+            const hasTransactionData = tempBody.data && (tempBody.data.amount || tempBody.data.reference || (tempBody.order && tempBody.order.amount));
+
+            if (!hasTransactionData && !tempBody.event) { // Simple ping often lacks event too
+                await DebugLog.create({ source: 'pocketfi-webhook', type: 'info', message: 'Unsigned Ping Accepted', metadata: { body: rawBody } });
+                return NextResponse.json({ status: 'ping_accepted' }, { status: 200 });
+            }
+
+            // If it has important data but missing signature, we can optionally log specific warning or allow depending on strictness.
+            // keeping strict for legacy but adding detailed log
             await DebugLog.create({ source: 'pocketfi-webhook', type: 'error', message: 'Signature Mismatch', metadata: { header: signatureHeader } });
             console.warn('Webhook signature verification failed');
             return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
@@ -68,8 +79,12 @@ export async function POST(req: Request) {
         // PocketFi events: 'payment.success', 'transfer.success', 'charge.success'
         if (['payment.success', 'transfer.success', 'charge.success'].includes(event)) {
             const data = body.data || body;
-            const reference = data.reference || data.tx_ref;
-            const amount = Number(data.amount);
+            // FIX: Reference might be in body.transaction.reference (DVA format)
+            let reference = data.reference || data.tx_ref;
+            if (!reference && body.transaction && body.transaction.reference) {
+                reference = body.transaction.reference;
+            }
+            const amount = Number(data.amount || data.settlement_amount);
 
             console.log(`[PocketFi Webhook] Processing ${event} for ref: ${reference}`);
 

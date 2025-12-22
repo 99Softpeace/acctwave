@@ -16,16 +16,28 @@ async function readLogs() {
         await mongoose.connect(process.env.MONGODB_URI);
         console.log('Connected to DB. Fetching last 5 logs...');
 
-        const logs = await DebugLog.find().sort({ createdAt: -1 }).limit(50);
+        const logs = await DebugLog.find({ source: 'pf_notify' }).sort({ createdAt: -1 }).limit(100);
 
         if (logs.length === 0) {
             console.log('No logs found.');
         } else {
             logs.forEach(log => {
-                console.log('------------------------------------------------');
-                console.log(`[${log.createdAt.toISOString()}] ${log.source} (${log.type})`);
-                console.log(`Message: ${log.message}`);
-                console.log('Metadata:', JSON.stringify(log.metadata, null, 2));
+                const m = log.metadata || {};
+                const h = m.headers || {};
+                let b = m.body;
+                try {
+                    if (typeof b === 'string') b = JSON.parse(b);
+                } catch (e) { b = {}; }
+
+                console.log(`[${log.createdAt.toISOString()}] MSG: ${log.message}`);
+                console.log(`SigHeader: ${h['x-pocketfi-signature'] || h['pocketfi_signature'] || 'MISSING'}`);
+                if (b && b.transaction) {
+                    console.log(`TxRef: ${b.transaction.reference}`);
+                }
+                if (b && b.order) {
+                    console.log(`Amount: ${b.order.amount}`);
+                }
+                console.log('---');
             });
         }
 
