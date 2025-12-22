@@ -24,7 +24,7 @@ export default function SettingsPage() {
             setName(session.user.name);
         }
         if ((session?.user as any)?.phoneNumber) {
-            setPhoneNumber((session.user as any).phoneNumber);
+            setPhoneNumber((session?.user as any)?.phoneNumber);
         }
     }, [session]);
 
