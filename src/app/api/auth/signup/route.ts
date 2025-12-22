@@ -8,7 +8,7 @@ export async function POST(req: Request) {
         const { name, email, phoneNumber, password } = await req.json();
 
         // Validate input
-        if (!name || !email || !phoneNumber || !password) {
+        if (!name || !email || !password) {
             return NextResponse.json(
                 { message: 'Please provide all required fields' },
                 { status: 400 }
@@ -25,8 +25,14 @@ export async function POST(req: Request) {
         await dbConnect();
 
         // Check if user already exists (email or phone)
+        // Check if user already exists (email or phone if provided)
+        const orConditions: any[] = [{ email }];
+        if (phoneNumber) {
+            orConditions.push({ phoneNumber });
+        }
+
         const existingUser = await User.findOne({
-            $or: [{ email }, { phoneNumber }]
+            $or: orConditions
         });
 
         if (existingUser) {

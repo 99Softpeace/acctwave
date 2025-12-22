@@ -31,11 +31,7 @@ export default function SignupPage() {
             return;
         }
 
-        if (!formData.phoneNumber) {
-            setError('Phone number is required');
-            setIsLoading(false);
-            return;
-        }
+
 
         try {
             // 1. Create user account
@@ -157,12 +153,11 @@ export default function SignupPage() {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wider drop-shadow-sm">Phone Number</label>
+                                <label className="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wider drop-shadow-sm">Phone Number <span className="text-white/70 italic normal-case ml-1">(optional)</span></label>
                                 <div className="relative">
                                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                     <input
                                         type="tel"
-                                        required
                                         value={formData.phoneNumber}
                                         onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                                         className="w-full bg-transparent border border-white/20 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"

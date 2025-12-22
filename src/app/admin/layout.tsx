@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { LayoutDashboard, Users, ShoppingBag, LogOut, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, ShoppingBag, LogOut, Shield, MessageSquare } from 'lucide-react';
 
 export default function AdminLayout({
     children,
@@ -36,6 +36,7 @@ export default function AdminLayout({
         { name: 'Overview', href: '/admin', icon: LayoutDashboard },
         { name: 'Users', href: '/admin/users', icon: Users },
         { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+        { name: 'Messaging', href: '/admin/messages', icon: MessageSquare },
     ];
 
     return (

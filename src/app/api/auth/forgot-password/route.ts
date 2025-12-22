@@ -7,14 +7,19 @@ import { sendEmail } from '@/lib/mail';
 export async function POST(req: Request) {
     try {
         await connectToDatabase();
-        const { email } = await req.json();
+        const { email, phoneNumber } = await req.json();
 
-        const user = await User.findOne({ email });
+        let user;
+        if (email) {
+            user = await User.findOne({ email });
+        } else if (phoneNumber) {
+            user = await User.findOne({ phoneNumber });
+        }
 
         if (!user) {
-            // We return 200 even if user doesn't exist to prevent email enumeration
+            // We return 200 even if user doesn't exist to prevent enumeration
             return NextResponse.json(
-                { message: 'If an account with that email exists, we have sent a password reset link.' },
+                { message: 'If an account with that identifier exists, we have sent a password reset message.' },
                 { status: 200 }
             );
         }
@@ -46,15 +51,23 @@ export async function POST(req: Request) {
         `;
 
         try {
-            await sendEmail({
-                to: user.email,
-                subject: 'Password reset token',
-                text: message,
-                html: html,
-            });
+            if (email) {
+                await sendEmail({
+                    to: user.email,
+                    subject: 'Password reset token',
+                    text: message,
+                    html: html,
+                });
+            } else if (phoneNumber) {
+                // SMS STUB
+                console.log('----------------------------------------');
+                console.log(`[SMS STUB] Sending Password Reset Code to ${phoneNumber}`);
+                console.log(`[SMS STUB] Reset Link: ${resetUrl}`);
+                console.log('----------------------------------------');
+            }
 
             return NextResponse.json(
-                { message: 'Email sent' },
+                { message: 'Reset instruction sent' },
                 { status: 200 }
             );
         } catch (error) {
@@ -63,7 +76,7 @@ export async function POST(req: Request) {
             await user.save();
 
             return NextResponse.json(
-                { message: 'Email could not be sent' },
+                { message: 'Could not send reset instruction' },
                 { status: 500 }
             );
         }

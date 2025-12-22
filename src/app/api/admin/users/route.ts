@@ -4,6 +4,8 @@ import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import { authOptions } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
     try {
         const session = await getServerSession(authOptions);
@@ -14,20 +16,28 @@ export async function GET(req: Request) {
 
         await dbConnect();
 
-        // Pagination
+        // Pagination & Filtering
         const { searchParams } = new URL(req.url);
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
+        const status = searchParams.get('status') || 'all'; // all, active, suspended
         const skip = (page - 1) * limit;
 
-        const users = await User.find({})
+        const query: any = {};
+        if (status === 'suspended') {
+            query.isSuspended = true;
+        } else if (status === 'active') {
+            query.isSuspended = { $ne: true }; // undefined or false
+        }
+
+        const users = await User.find(query)
             .select('-password') // Exclude password
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
             .lean();
 
-        const total = await User.countDocuments({});
+        const total = await User.countDocuments(query);
 
         return NextResponse.json({
             success: true,

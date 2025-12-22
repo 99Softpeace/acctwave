@@ -28,8 +28,8 @@ const UserSchema = new mongoose.Schema({
     },
     phoneNumber: {
         type: String,
-        required: [true, 'Please provide a phone number'],
         unique: true,
+        sparse: true,
     },
     api_key: {
         type: String,
@@ -40,6 +40,10 @@ const UserSchema = new mongoose.Schema({
         bankName: String,
         accountNumber: String,
         accountName: String,
+    },
+    isSuspended: {
+        type: Boolean,
+        default: false,
     },
     createdAt: {
         type: Date,

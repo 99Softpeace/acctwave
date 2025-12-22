@@ -25,6 +25,10 @@ export const authOptions: NextAuthOptions = {
                     throw new Error('No user found with this email');
                 }
 
+                if (user.isSuspended) {
+                    throw new Error('Account suspended. Contact support.');
+                }
+
                 const isMatch = await bcrypt.compare(credentials.password, user.password);
 
                 if (!isMatch) {
@@ -41,12 +45,33 @@ export const authOptions: NextAuthOptions = {
                 token.id = user.id;
                 token.role = (user as any).role;
             }
+
             if (trigger === "update" && session?.name) {
                 token.name = session.name;
             }
             return token;
         },
         async session({ session, token }: any) {
+            // [NEW] Check DB on every session access because 'jwt' doesn't always run
+            console.log('[Auth Debug] Session Callback Running');
+            if (token.id) {
+                try {
+                    await dbConnect();
+                    console.log(`[Auth Debug] Checking DB for User ID: ${token.id}`);
+                    const dbUser = await User.findById(token.id).select('isSuspended email');
+                    console.log(`[Auth Debug] DB Result:`, dbUser ? { email: dbUser.email, isSuspended: dbUser.isSuspended } : 'User Not Found');
+
+                    if (dbUser?.isSuspended) {
+                        console.log('[Auth Debug] User is SUSPENDED. Destroying Session.');
+                        return null; // FORCE LOGOUT
+                    }
+                } catch (error) {
+                    console.error('Session DB check failed:', error);
+                }
+            } else {
+                console.log('[Auth Debug] Warning: No token.id found in token object:', Object.keys(token));
+            }
+
             if (session.user) {
                 (session.user as any).id = token.id;
                 (session.user as any).role = token.role;
