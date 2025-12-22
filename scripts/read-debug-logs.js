@@ -16,7 +16,7 @@ async function readLogs() {
         await mongoose.connect(process.env.MONGODB_URI);
         console.log('Connected to DB. Fetching last 5 logs...');
 
-        const logs = await DebugLog.find().sort({ createdAt: -1 }).limit(20);
+        const logs = await DebugLog.find().sort({ createdAt: -1 }).limit(50);
 
         if (logs.length === 0) {
             console.log('No logs found.');

@@ -24,6 +24,7 @@ function verifySignature(rawBody: string, signature: string | null, secret: stri
 }
 
 export async function GET(req: Request) {
+    await DebugLog.create({ source: 'pf_notify', type: 'info', message: 'GET Request (Redirect?)' });
     return NextResponse.json({ status: 'active', message: 'PocketFi Webhook (Direct)' }, { status: 200 });
 }
 
