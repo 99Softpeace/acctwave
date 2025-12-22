@@ -1,0 +1,12 @@
+{
+    "rewrites": [
+        {
+            "source": "/api/pocketfi/webhook",
+            "destination": "/api/pocketfi/webhook"
+        },
+        {
+            "source": "/api/pocketfi/webhook/",
+            "destination": "/api/pocketfi/webhook"
+        }
+    ]
+}
