@@ -81,7 +81,7 @@ export async function createVirtualAccount(email: string, name: string, phoneNum
         phone: phoneNumber,
         email: email,
         businessId: String(process.env.POCKETFI_BUSINESS_ID),
-        bank: "kuda"
+        bank: "paga"
     };
 
     console.log('--- POCKETFI DVA PAYLOAD START ---');
