@@ -16,11 +16,15 @@ export default function SettingsPage() {
 
     // Profile State
     const [name, setName] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
     const [profileLoading, setProfileLoading] = useState(false);
 
     useEffect(() => {
         if (session?.user?.name) {
             setName(session.user.name);
+        }
+        if ((session?.user as any)?.phoneNumber) {
+            setPhoneNumber((session.user as any).phoneNumber);
         }
     }, [session]);
 
@@ -70,14 +74,14 @@ export default function SettingsPage() {
             const res = await fetch('/api/user/update-profile', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name }),
+                body: JSON.stringify({ name, phoneNumber }),
             });
 
             const data = await res.json();
 
             if (data.success) {
                 toast.success('Profile updated successfully');
-                await update({ name }); // Update session
+                await update({ name, phoneNumber }); // Update session
             } else {
                 toast.error(data.error || 'Failed to update profile');
             }
@@ -146,6 +150,16 @@ export default function SettingsPage() {
                                     onChange={(e) => setName(e.target.value)}
                                     className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors"
                                     placeholder="Enter your name"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Phone Number</label>
+                                <input
+                                    type="tel"
+                                    value={phoneNumber}
+                                    onChange={(e) => setPhoneNumber(e.target.value)}
+                                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors"
+                                    placeholder="Enter your phone number"
                                 />
                             </div>
                             <div>

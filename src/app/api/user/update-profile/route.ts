@@ -11,7 +11,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { name } = await req.json();
+        const { name, phoneNumber } = await req.json();
 
         if (!name) {
             return NextResponse.json({ success: false, error: 'Please provide a name' }, { status: 400 });
@@ -19,9 +19,14 @@ export async function POST(req: Request) {
 
         await dbConnect();
 
+        const updateData: any = { name };
+        if (phoneNumber !== undefined) {
+            updateData.phoneNumber = phoneNumber;
+        }
+
         const user = await User.findByIdAndUpdate(
             (session.user as any).id,
-            { name },
+            updateData,
             { new: true, runValidators: true }
         );
 
@@ -29,7 +34,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
         }
 
-        return NextResponse.json({ success: true, message: 'Profile updated successfully', user: { name: user.name, email: user.email } });
+        return NextResponse.json({ success: true, message: 'Profile updated successfully', user: { name: user.name, email: user.email, phoneNumber: user.phoneNumber } });
 
     } catch (error: any) {
         console.error('Update Profile Error:', error);
