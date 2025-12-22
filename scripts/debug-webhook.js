@@ -3,7 +3,7 @@ const crypto = require('crypto');
 require('dotenv').config();
 
 // CONFIG
-const WEBHOOK_URL = 'http://localhost:3000/api/pocketfi/webhook';
+const WEBHOOK_URL = 'http://localhost:3000/api/pf_notify';
 const SECRET = process.env.WEBHOOK_SIGNING_SECRET;
 const TEST_ACCOUNT_NUMBER = '9876543210'; // We will attempt to use this, or update manually
 
