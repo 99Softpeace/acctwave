@@ -129,14 +129,14 @@ export default function FundWalletPage() {
                             <div className="bg-black/40 rounded-xl p-4 border border-white/5">
                                 <p className="text-sm text-gray-500 mb-2">Account Number</p>
                                 <div className="flex items-center justify-between gap-4">
-                                    <span className="text-3xl font-mono font-bold text-white tracking-wider">
+                                    <span className="text-xl sm:text-3xl font-mono font-bold text-white tracking-wider">
                                         {account?.accountNumber}
                                     </span>
                                     <button
                                         onClick={() => account && copyToClipboard(account.accountNumber)}
-                                        className="flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-gray-200 transition-colors active:scale-95"
+                                        className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-white text-black text-sm sm:text-base font-semibold rounded-lg hover:bg-gray-200 transition-colors active:scale-95 shrink-0"
                                     >
-                                        <Copy className="w-4 h-4" />
+                                        <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
                                         Copy
                                     </button>
                                 </div>
