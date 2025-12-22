@@ -35,8 +35,9 @@ async function findAndRecover() {
         const startTime = new Date(Date.now() - 6 * 60 * 60 * 1000);
 
         // Find "Unsigned Ping Accepted" logs that actually had money
+        // Scan BOTH pf_notify and pocketfi-webhook
         const logs = await DebugLog.find({
-            source: 'pf_notify',
+            source: { $in: ['pf_notify', 'pocketfi-webhook'] },
             createdAt: { $gt: startTime }
         }).sort({ createdAt: -1 });
 
