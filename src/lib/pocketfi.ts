@@ -80,12 +80,8 @@ export async function createVirtualAccount(email: string, name: string, phoneNum
         last_name: lastName,
         phone: phoneNumber,
         email: email,
-        type: "static",
-        businessId: Number(process.env.POCKETFI_BUSINESS_ID),
-        bank: "090267",
-        reference: txRef,
-        tx_ref: txRef,
-        bvn: ""
+        businessId: String(process.env.POCKETFI_BUSINESS_ID),
+        bank: "kuda"
     };
 
     console.log('--- POCKETFI DVA PAYLOAD START ---');
@@ -95,7 +91,7 @@ export async function createVirtualAccount(email: string, name: string, phoneNum
     const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${process.env.POCKETFI_SECRET_KEY || POCKETFI_API_KEY}`, // Uses Secret Key for server-side ops
+            'Authorization': `Bearer ${POCKETFI_API_KEY}`, // Using Public Key
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },

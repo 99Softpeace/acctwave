@@ -26,7 +26,8 @@ export async function GET(req: Request) {
         if (user.virtualAccount && user.virtualAccount.accountNumber) {
             return NextResponse.json({
                 success: true,
-                data: user.virtualAccount
+                data: user.virtualAccount,
+                balance: user.balance // [NEW] Return balance
             });
         }
 
@@ -38,14 +39,19 @@ export async function GET(req: Request) {
 
         const dvaResponse = await createVirtualAccount(user.email, user.name, phoneNumber);
 
-        if (dvaResponse.status === 'success' || dvaResponse.success) {
-            const accountData = dvaResponse.data;
+        if (dvaResponse.status === 'success' || dvaResponse.success || dvaResponse.status === true) {
+            // Handle Kuda Response Structure (banks array)
+            const accountData = dvaResponse.banks ? dvaResponse.banks[0] : dvaResponse.data;
+
+            if (!accountData) {
+                throw new Error('No account data returned from PocketFi');
+            }
 
             // Map API response to our schema
             const newAccount = {
-                bankName: accountData.bank_name || accountData.bank || 'PocketFi Bank',
-                accountNumber: accountData.account_number || accountData.number,
-                accountName: accountData.account_name || user.name
+                bankName: accountData.bankName || accountData.bank_name || accountData.bank || 'PocketFi Bank',
+                accountNumber: accountData.accountNumber || accountData.account_number || accountData.number,
+                accountName: accountData.accountName || accountData.account_name || user.name
             };
 
             // Save to user
@@ -54,7 +60,8 @@ export async function GET(req: Request) {
 
             return NextResponse.json({
                 success: true,
-                data: newAccount
+                data: newAccount,
+                balance: user.balance // [NEW] Return balance
             });
         } else {
             console.error('PocketFi Create Account Failed:', dvaResponse);
