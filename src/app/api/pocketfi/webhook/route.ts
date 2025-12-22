@@ -20,6 +20,11 @@ function verifySignature(rawBody: string, signature: string | null, secret: stri
     }
 }
 
+// Helper for GET requests (Health check / Verification)
+export async function GET(req: Request) {
+    return NextResponse.json({ status: 'active', message: 'PocketFi Webhook Endpoint' }, { status: 200 });
+}
+
 export async function POST(req: Request) {
     if (!SIGNING_SECRET) {
         console.error('WEBHOOK_SIGNING_SECRET is not set');
