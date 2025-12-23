@@ -167,18 +167,29 @@ export async function POST(req: Request) {
                 await transaction.save();
             } else {
                 // Create new record for DVA deposit
-                await Transaction.create({
-                    user: user._id,
-                    amount: amount,
-                    reference: reference,
-                    status: 'successful',
-                    payment_method: 'bank_transfer',
-                    type: 'deposit',
-                    description: `Wallet Funding via Virtual Account`,
-                    metadata: {
-                        pocketfi_payload: body
+                // Create new record for DVA deposit
+                try {
+                    await Transaction.create({
+                        user: user._id,
+                        amount: amount,
+                        reference: reference,
+                        status: 'successful',
+                        payment_method: 'bank_transfer',
+                        type: 'deposit',
+                        description: `Wallet Funding via Virtual Account`,
+                        metadata: {
+                            pocketfi_payload: body
+                        }
+                    });
+                } catch (txErr: any) {
+                    // Handle Race Condition / Duplicate Entry
+                    if (txErr.code === 11000) {
+                        console.warn(`[PocketFi Webhook] Transaction ${reference} already exists (Race Condition handled).`);
+                        // Optionally update the existing one if needed, but for now just safely continue
+                    } else {
+                        throw txErr;
                     }
-                });
+                }
             }
 
             console.log('Transaction processed successfully');
