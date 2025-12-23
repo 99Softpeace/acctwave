@@ -7,7 +7,7 @@ import { createVirtualAccount } from '@/lib/pocketfi';
 
 export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        let session = await getServerSession(authOptions);
 
         if (!session || !session.user) {
             // [EMERGENCY FIX] If session fails, force-load the specific user to unblock delivery
