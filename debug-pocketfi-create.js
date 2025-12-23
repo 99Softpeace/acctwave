@@ -4,16 +4,15 @@ const axios = require('axios');
 async function testCreateAccount() {
     console.log('--- PocketFi Direct Debug Script ---');
 
-    // 1. Check Env Vars - PRIORITIZE API KEY AS BEARER TOKEN
-    const secretKey = process.env.POCKETFI_API_KEY || process.env.POCKETFI_SECRET_KEY;
+    // 1. Check Env Vars - TRY PUBLIC KEY
+    const secretKey = process.env.POCKETFI_API_KEY; // TRY PUBLIC KEY
     const businessId = process.env.POCKETFI_BUSINESS_ID;
 
-    console.log('Auth Token Present:', !!secretKey);
-    console.log('Token Start:', secretKey ? secretKey.substring(0, 8) + '...' : 'NONE');
+    console.log('Secret Key (Auth):', secretKey ? secretKey.substring(0, 8) + '...' : 'NONE');
     console.log('Business ID:', businessId);
 
-    if (!secretKey || !businessId) {
-        console.error('ERROR: Missing Env Vars (POCKETFI_API_KEY or POCKETFI_BUSINESS_ID)');
+    if (!secretKey) {
+        console.error('ERROR: Missing POCKETFI_SECRET_KEY (Required for DVA creation)');
         return;
     }
 
@@ -24,9 +23,8 @@ async function testCreateAccount() {
         last_name: "Tester",
         email: "debug.tester@example.com",
         phone: "08012345678",
-        type: "static",
-        businessId: Number(businessId), // Try sending as number
-        bank: "090267", // CBN Code for Kuda
+        businessId: businessId || "29663", // Fallback to known ID if missing
+        bank: "paga",
         reference: txRef,
         tx_ref: txRef
     };
