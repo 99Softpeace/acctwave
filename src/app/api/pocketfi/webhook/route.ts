@@ -127,7 +127,7 @@ export async function POST(req: Request) {
             // CASE B: Dedicated Virtual Account (No pre-created transaction likely)
             else {
                 console.log('[PocketFi Webhook] Transaction not found, trying DVA lookup...');
-                const rawAccount = data.destination_account_number || data.account_number;
+                const rawAccount = data.destination_account_number || data.account_number || data.details?.account_number;
 
                 if (rawAccount) {
                     const accountNumber = String(rawAccount).trim(); // Ensure string and no spaces

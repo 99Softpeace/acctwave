@@ -35,11 +35,11 @@ export async function GET(req: Request) {
             return NextResponse.json({ success: false, message: 'Unauthorized access to transaction' }, { status: 403 });
         }
 
-        // If already completed, return success immediately
-        if (transaction.status === 'completed') {
+        // If already successful, return success immediately
+        if (transaction.status === 'successful') {
             return NextResponse.json({
                 success: true,
-                status: 'completed',
+                status: 'successful',
                 message: 'Transaction successful'
             });
         }
@@ -61,19 +61,25 @@ export async function GET(req: Request) {
         const verification = await verifyPayment(pocketFiRef);
 
         if (verification.status && verification.data.status === 'successful') {
+            // RACE CONDITION PROTECTION: Re-fetch transaction to make sure webhook didn't just update it
+            const freshTransaction = await Transaction.findById(transaction._id);
+            if (freshTransaction.status === 'successful') {
+                return NextResponse.json({
+                    success: true,
+                    status: 'successful',
+                    message: 'Transaction verified and wallet funded'
+                });
+            }
+
             // Update transaction
-            transaction.status = 'completed';
-            await transaction.save();
+            freshTransaction.status = 'successful';
+            await freshTransaction.save();
 
             // Credit user wallet (if not already done - double safety)
-            // Note: In a race condition with webhook, we might credit twice if not careful.
-            // Ideally, we should use a transaction or atomic update with condition.
-            // For now, simpler check:
-
             // Re-fetch user to get latest balance
             const freshUser = await User.findById(user._id);
 
-            const addAmount = Number(transaction.amount); // Explicit cast
+            const addAmount = Number(freshTransaction.amount); // Explicit cast
             console.log(`[VERIFY] Updating balance for user ${user.email}. Old: ${freshUser.balance}, Adding: ${addAmount}`);
 
             freshUser.balance = Number(freshUser.balance) + addAmount;
@@ -83,7 +89,7 @@ export async function GET(req: Request) {
 
             return NextResponse.json({
                 success: true,
-                status: 'completed',
+                status: 'successful',
                 message: 'Transaction verified and wallet funded'
             });
         } else if (verification.status && verification.data.status === 'failed') {
