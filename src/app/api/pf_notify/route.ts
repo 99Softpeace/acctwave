@@ -56,7 +56,8 @@ export async function POST(req: Request) {
         if (!signatureHeader) {
             // RELAXED CHECK: If it's a verification ping (missing amount/reference), allow it.
             const tempBody = JSON.parse(rawBody);
-            const hasTransactionData = tempBody.data && (tempBody.data.amount || tempBody.data.reference);
+            const hasTransactionData = (tempBody.data && (tempBody.data.amount || tempBody.data.reference)) ||
+                (tempBody.order && (tempBody.order.amount || tempBody.order.reference));
 
             if (!hasTransactionData) {
                 await DebugLog.create({ source: 'pf_notify', type: 'info', message: 'Unsigned Ping Accepted', metadata: { body: rawBody } });
