@@ -23,7 +23,11 @@ export async function GET(req: Request) {
 
         await dbConnect();
 
-        const userId = ((session as any).user as any).id;
+        const userId = (session?.user as any)?.id;
+
+        if (!userId) {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
         const user = await User.findById(userId);
 
         if (!user) {
