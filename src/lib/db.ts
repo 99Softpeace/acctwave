@@ -16,7 +16,14 @@ if (!cached) {
 
 async function dbConnect() {
     if (cached.conn) {
-        return cached.conn;
+        // [FIX] Check if connection is actually alive (1 = Connected)
+        if (cached.conn.readyState === 1) {
+            return cached.conn;
+        }
+        console.warn('Database connection found but not ready (State: ' + cached.conn.readyState + '). Reconnecting...');
+        // Force reset to allow reconnection below
+        cached.conn = null;
+        cached.promise = null;
     }
 
     if (!MONGODB_URI) {
