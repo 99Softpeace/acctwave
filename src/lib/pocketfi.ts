@@ -82,7 +82,7 @@ export async function createVirtualAccount(email: string, name: string, phoneNum
         last_name: lastName,
         phone: phoneNumber,
         email: email,
-        businessId: String(process.env.POCKETFI_BUSINESS_ID),
+        businessId: process.env.POCKETFI_BUSINESS_ID || POCKETFI_API_KEY.split('|')[0], // FIX: Add fallback
         bank: "paga"
     };
 
