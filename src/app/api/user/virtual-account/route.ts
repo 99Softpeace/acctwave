@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 
         await dbConnect();
 
-        const userId = (session!.user as any).id;
+        const userId = ((session as any).user as any).id;
         const user = await User.findById(userId);
 
         if (!user) {
