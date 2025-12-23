@@ -66,7 +66,8 @@ export async function POST(req: Request) {
                     debug_db: {
                         readyState: (global as any).mongoose?.conn?.readyState || 0,
                         name: (global as any).mongoose?.conn?.name || 'unknown',
-                        host: (global as any).mongoose?.conn?.host || 'unknown'
+                        host: (global as any).mongoose?.conn?.host || 'unknown',
+                        uri_masked: process.env.MONGODB_URI ? process.env.MONGODB_URI.split('@')[1] : 'MISSING'
                     }
                 }, { status: 200 });
             }
