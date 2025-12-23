@@ -1,4 +1,5 @@
 const POCKETFI_API_KEY = process.env.POCKETFI_API_KEY || '';
+const POCKETFI_SECRET_KEY = process.env.POCKETFI_SECRET_KEY || '';
 const BASE_URL = 'https://api.pocketfi.ng/api/v1';
 
 export async function initializePayment(email: string, amount: number, reference: string, firstName: string, lastName: string) {
@@ -93,7 +94,7 @@ export async function createVirtualAccount(email: string, name: string, phoneNum
     const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${POCKETFI_API_KEY}`, // Using Public Key
+            'Authorization': `Bearer ${POCKETFI_SECRET_KEY}`, // Must use Secret Key for DVA creation
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },
