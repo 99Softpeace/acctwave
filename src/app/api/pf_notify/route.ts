@@ -61,7 +61,14 @@ export async function POST(req: Request) {
             if (!hasTransactionData) {
                 await DebugLog.create({ source: 'pf_notify', type: 'info', message: 'Unsigned Ping Accepted', metadata: { body: rawBody } });
                 console.log('Accepting unsigned verification ping');
-                return NextResponse.json({ status: 'ping_accepted' }, { status: 200 });
+                return NextResponse.json({
+                    status: 'ping_accepted',
+                    debug_db: {
+                        readyState: (global as any).mongoose?.conn?.readyState || 0,
+                        name: (global as any).mongoose?.conn?.name || 'unknown',
+                        host: (global as any).mongoose?.conn?.host || 'unknown'
+                    }
+                }, { status: 200 });
             }
 
             // If it LOOKS like a transaction but has no signature -> FORBIDDEN
