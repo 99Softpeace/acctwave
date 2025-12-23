@@ -17,10 +17,11 @@ if (!cached) {
 async function dbConnect() {
     if (cached.conn) {
         // [FIX] Check if connection is actually alive (1 = Connected)
-        if (cached.conn.readyState === 1) {
+        // cached.conn is the mongoose instance, so we need .connection
+        if (cached.conn.connection.readyState === 1) {
             return cached.conn;
         }
-        console.warn('Database connection found but not ready (State: ' + cached.conn.readyState + '). Reconnecting...');
+        console.warn('Database connection found but not ready (State: ' + cached.conn.connection.readyState + '). Reconnecting...');
         // Force reset to allow reconnection below
         cached.conn = null;
         cached.promise = null;
