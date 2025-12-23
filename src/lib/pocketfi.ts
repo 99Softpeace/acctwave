@@ -1,5 +1,5 @@
 const POCKETFI_API_KEY = process.env.POCKETFI_API_KEY || '';
-// const POCKETFI_SECRET_KEY = process.env.POCKETFI_SECRET_KEY || ''; // Not used for DVA
+const POCKETFI_SECRET_KEY = process.env.POCKETFI_SECRET_KEY || POCKETFI_API_KEY; // Fallback to API Key if Secret Key is not set
 
 const BASE_URL = 'https://api.pocketfi.ng/api/v1';
 
@@ -9,7 +9,7 @@ export async function initializePayment(email: string, amount: number, reference
 
     // Name parts are now passed in
 
-    // Extract Business ID: Use env var or split API key
+    // Extract Business ID: Use env var or split API key (API Key usually contains generic ID public facing)
     const businessId = process.env.POCKETFI_BUSINESS_ID || POCKETFI_API_KEY.split('|')[0];
 
     const payload = {
@@ -31,7 +31,7 @@ export async function initializePayment(email: string, amount: number, reference
     const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${POCKETFI_API_KEY}`,
+            'Authorization': `Bearer ${POCKETFI_API_KEY}`, // Public Key for checkout is standard
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },
@@ -55,7 +55,7 @@ export async function verifyPayment(reference: string) {
     const response = await fetch(`${BASE_URL}/transaction/verify/${reference}`, {
         method: 'GET',
         headers: {
-            'Authorization': `Bearer ${POCKETFI_API_KEY}`,
+            'Authorization': `Bearer ${POCKETFI_SECRET_KEY}`, // Use Secret Key for verification
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         }
@@ -71,7 +71,7 @@ export async function verifyPayment(reference: string) {
 export async function createVirtualAccount(email: string, name: string, phoneNumber: string) {
     const url = `${BASE_URL}/virtual-accounts/create`;
     console.log(`PocketFi: Creating DVA at ${url}`);
-    console.log(`PocketFi Create: Using API Key (Starts with: ${POCKETFI_API_KEY.substring(0, 5)}...)`);
+    console.log(`PocketFi Create: Using Secret Key (Starts with: ${POCKETFI_SECRET_KEY.substring(0, 5)}...)`);
 
 
     // Split name for potential API requirements
@@ -97,7 +97,7 @@ export async function createVirtualAccount(email: string, name: string, phoneNum
     const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${POCKETFI_API_KEY}`, // Using Public Key (Confirmed with diagnostics)
+            'Authorization': `Bearer ${POCKETFI_SECRET_KEY}`, // Using Secret Key for DVA
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },
