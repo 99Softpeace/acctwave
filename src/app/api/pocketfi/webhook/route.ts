@@ -78,17 +78,29 @@ export async function POST(req: Request) {
         const body = JSON.parse(rawBody);
         console.log('[PocketFi Webhook] Verified Payload:', JSON.stringify(body, null, 2));
 
-        const event = body.event || body.event_type;
+        const event = body.event || body.event_type || (body.order && body.transaction ? 'payment.success' : 'unknown');
         // 3. Core Logic
         // PocketFi events: 'payment.success', 'transfer.success', 'charge.success'
         if (['payment.success', 'transfer.success', 'charge.success'].includes(event)) {
             const data = body.data || body;
-            // FIX: Reference might be in body.transaction.reference (DVA format)
+
+            // FIX: Robust Extraction for DVA Payloads
             let reference = data.reference || data.tx_ref;
-            if (!reference && body.transaction && body.transaction.reference) {
+            if (body.transaction && body.transaction.reference) {
                 reference = body.transaction.reference;
             }
-            const amount = Number(data.amount || data.settlement_amount);
+
+            let amount = Number(data.amount || data.settlement_amount);
+            if (isNaN(amount) && body.order && body.order.amount) {
+                amount = Number(body.order.amount);
+            }
+
+            if (isNaN(amount)) {
+                console.error('[PocketFi Webhook] CRITICAL: Could not extract amount from payload', JSON.stringify(body));
+                return NextResponse.json({ status: 'ignored', reason: 'invalid_amount' }, { status: 200 });
+            }
+
+            console.log(`[PocketFi Webhook] Processing ${event} for ref: ${reference} Amount: ${amount}`);
 
             console.log(`[PocketFi Webhook] Processing ${event} for ref: ${reference}`);
 
