@@ -137,7 +137,7 @@ export async function POST(req: Request) {
                 if (transaction.status === 'successful') return NextResponse.json({ status: 'ok' });
                 user = await User.findById(transaction.user);
             } else {
-                const rawAccount = data.destination_account_number || data.account_number;
+                const rawAccount = data.destination_account_number || data.account_number || data.details?.account_number;
                 if (rawAccount) {
                     const accountNumber = String(rawAccount).trim();
                     user = await User.findOne({ 'virtualAccount.accountNumber': accountNumber });

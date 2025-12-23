@@ -15,7 +15,7 @@ export async function POST(req: Request) {
         // Handle Dedicated Account Transfers (Event type usually differs)
         if (body.account_number || (event_type && event_type.includes('transfer'))) {
             // This is a virtual account transfer
-            const accountNumber = body.account_number || body.data?.account_number;
+            const accountNumber = body.account_number || body.data?.account_number || body.destination_account_number || body.details?.account_number;
             const transferAmount = body.amount || body.data?.amount;
 
             if (!accountNumber) {
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
                 user: user._id,
                 amount: creditAmount,
                 reference: txReference,
-                status: 'completed',
+                status: 'successful',
                 payment_method: 'bank_transfer',
                 type: 'deposit',
                 description: 'Wallet Funding via Bank Transfer',
@@ -92,12 +92,12 @@ export async function POST(req: Request) {
 
             console.log(`Transaction found: ${transaction._id}, Status: ${transaction.status}`);
 
-            if (transaction.status === 'completed') {
+            if (transaction.status === 'successful') {
                 return NextResponse.json({ success: true, message: 'Transaction already completed' });
             }
 
             // Update transaction
-            transaction.status = 'completed';
+            transaction.status = 'successful';
             await transaction.save();
 
             // Credit user wallet
