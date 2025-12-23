@@ -174,6 +174,38 @@ export async function POST(req: Request) {
             // execute credit
             const oldBalance = user.balance;
             user.balance = Number(user.balance) + amount;
+
+            // BONUS LOGIC: 15% on First Deposit
+            try {
+                const previousDeposits = await Transaction.countDocuments({
+                    user: user._id,
+                    type: 'deposit',
+                    status: 'successful'
+                });
+
+                if (previousDeposits === 0) {
+                    const bonusAmount = amount * 0.15;
+                    user.balance = Number(user.balance) + bonusAmount;
+                    console.log(`[First Deposit Bonus] Awarding ${bonusAmount} to ${user.email}`);
+
+                    await Transaction.create({
+                        user: user._id,
+                        amount: bonusAmount,
+                        reference: `${reference}-BONUS`,
+                        status: 'successful',
+                        type: 'bonus',
+                        description: '15% First Deposit Bonus',
+                        metadata: {
+                            original_reference: reference,
+                            calculation: `${amount} * 0.15`
+                        }
+                    });
+                }
+            } catch (bonusErr) {
+                console.error('[First Deposit Bonus] Error calculating/awarding bonus:', bonusErr);
+                // Swallow error ensures primary deposit still succeeds
+            }
+
             await user.save();
             console.log(`Credited user ${user.email}: ${oldBalance} -> ${user.balance}`);
 
