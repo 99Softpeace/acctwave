@@ -104,30 +104,35 @@ export async function POST(req: Request) {
 
             console.log(`[PocketFi Webhook] Processing ${event} for ref: ${reference}`);
 
-            // STEP 3: Verify transaction via PocketFi API (Double Check)
-            try {
-                const { verifyPayment } = await import('@/lib/pocketfi');
-                const verification = await verifyPayment(reference);
+            // STEP 3: Verify transaction
+            // NOTE for DVA: The PocketFi Verification API returns 404 for 'PFI|...' references.
+            // We must trust the Webhook Payload for these specific transactions.
+            let verificationStatus = 'successful';
 
-                console.log(`[PocketFi Verification] API Check for ${reference}:`, verification.status);
+            if (!reference.startsWith('PFI|')) {
+                try {
+                    const { verifyPayment } = await import('@/lib/pocketfi');
+                    const verification = await verifyPayment(reference);
+                    console.log(`[PocketFi Verification] API Check for ${reference}:`, verification.status);
 
-                if (verification.status !== 'successful' && verification.data?.status !== 'successful') {
-                    console.error(`[PocketFi Webhook] Verification Failed. API says: ${verification.status}`);
-                    await DebugLog.create({ source: 'pocketfi-webhook', type: 'error', message: 'API Verification Failed', metadata: { reference, verification } });
-                    // We return 200 to ACK receipt, but do NOT credit user
-                    return NextResponse.json({ status: 'ignored' }, { status: 200 });
+                    if (verification.status !== 'successful' && verification.data?.status !== 'successful') {
+                        console.error('[PocketFi Webhook] Payment verification failed:', verification);
+                        return NextResponse.json({ status: 'ignored', reason: 'verification_failed' }, { status: 200 });
+                    }
+                } catch (error) {
+                    console.error('[PocketFi Webhook] API Verify Error (Skipping for robust handling)', error);
+                    // Decide: Should we fail or continue? classic payments should verify.
+                    // For now, if API fails, we return ignored to be safe unless it's a known timeout.
+                    return NextResponse.json({ status: 'ignored', reason: 'verification_error' }, { status: 200 });
                 }
-            } catch (verifyErr: any) {
-                console.error('[PocketFi Webhook] Verify API call failed:', verifyErr.message);
-                // Fail safe: If API check fails, do NOT process payment.
-                await DebugLog.create({ source: 'pocketfi-webhook', type: 'error', message: 'API Call Failed', metadata: { error: verifyErr.message } });
-                return NextResponse.json({ status: 'ignored' }, { status: 200 });
+            } else {
+                console.log(`[PocketFi Webhook] Skipping API Verification for DVA Reference: ${reference}`);
             }
 
-            await dbConnect();
-
-            let user = null;
+            // STEP 4: Update/Create Transaction
+            await dbConnect(); // Ensure DB connection is active
             let transaction = await Transaction.findOne({ reference: reference });
+            let user = null; // Initialize user here
 
             // CASE A: Transaction exists (Checkout Flow)
             if (transaction) {
