@@ -1,23 +1,35 @@
 
-// Native fetch in Node 18+
+const fetch = globalThis.fetch;
+// Node 18+ has native fetch
 
-async function pingProd() {
+const WEBHOOK_URL = 'https://www.acctwave.com/api/pf_notify'; // Production
+
+async function testWebhook() {
+    console.log(`Pinging ${WEBHOOK_URL} ...`);
+
+    // Minimal payload that looks like a verification ping
+    const payload = {
+        event: 'ping',
+        timestamp: Date.now()
+    };
+
     try {
-        console.log('Pinging https://www.acctwave.com/api/pf_notify ...');
-        const res = await fetch('https://www.acctwave.com/api/pf_notify', {
+        const response = await fetch(WEBHOOK_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                event: 'ping',
-                data: { message: 'Can you hear me?', timestamp: Date.now() }
-            })
+            headers: {
+                'Content-Type': 'application/json',
+                // No signature = Verification Ping
+            },
+            body: JSON.stringify(payload)
         });
 
-        console.log('Status:', res.status);
-        console.log('Text:', await res.text());
-    } catch (e) {
-        console.error('Ping Failed:', e);
+        const text = await response.text();
+        console.log(`Status: ${response.status}`);
+        console.log(`Body: ${text}`);
+
+    } catch (error) {
+        console.error('Error pinging webhook:', error.message);
     }
 }
 
-pingProd();
+testWebhook();

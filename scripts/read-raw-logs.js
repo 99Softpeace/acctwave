@@ -21,11 +21,7 @@ async function readRaw() {
             if (log.metadata) console.log(JSON.stringify(log.metadata, null, 2));
         });
 
-    } catch (e) {
-        console.error(e);
-    } finally {
-        await mongoose.disconnect();
-    }
+    } catch (e) { console.error(e); } finally { await mongoose.disconnect(); }
 }
 
 readRaw();
