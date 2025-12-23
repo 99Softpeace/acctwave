@@ -52,7 +52,8 @@ export async function initializePayment(email: string, amount: number, reference
 }
 
 export async function verifyPayment(reference: string) {
-    const response = await fetch(`${BASE_URL}/transaction/verify/${reference}`, {
+    const encodedRef = encodeURIComponent(reference);
+    const response = await fetch(`${BASE_URL}/transaction/verify/${encodedRef}`, {
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${POCKETFI_SECRET_KEY}`, // Use Secret Key for verification
@@ -62,7 +63,9 @@ export async function verifyPayment(reference: string) {
     });
 
     if (!response.ok) {
-        throw new Error('Failed to verify payment');
+        const errorBody = await response.text();
+        console.error(`[PocketFi Verify] Failed for ${reference}. Status: ${response.status}. Body: ${errorBody}`);
+        throw new Error(`Failed to verify payment: ${response.status} ${errorBody}`);
     }
 
     return response.json();
