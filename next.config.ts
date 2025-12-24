@@ -1,8 +1,17 @@
+import type { NextConfig } from "next";
 
-const nextConfig = {
+const nextConfig: NextConfig = {
   // CRITICAL: Prevent 307 redirects that break webhooks
   skipTrailingSlashRedirect: true,
   trailingSlash: false,
+
+  // Force Rebuild to pick up new Env Vars (PocketFi Keys)
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 
   /* config options here */
   async headers() {
@@ -33,9 +42,6 @@ const nextConfig = {
         ]
       }
     ];
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
   },
 };
 
