@@ -49,7 +49,7 @@ export async function POST(req: Request) {
         // We send the email 'To' the sender (admin) and 'Bcc' everyone else.
         // This prevents users from seeing each other's email addresses.
 
-        const adminEmail = session.user.email || 'admin@acctwave.com';
+        const adminEmail = session?.user?.email || 'admin@acctwave.com';
 
         // Note: Resend Free tier has limits (e.g. 50 recipients). 
         // For production with many users, we should use Batch API or loop.
