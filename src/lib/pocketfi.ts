@@ -89,7 +89,7 @@ export async function createVirtualAccount(email: string, name: string, phoneNum
         last_name: lastName,
         phone: phoneNumber,
         email: email,
-        businessId: process.env.POCKETFI_BUSINESS_ID || POCKETFI_API_KEY.split('|')[0], // FIX: Add fallback
+        business_id: process.env.POCKETFI_BUSINESS_ID || POCKETFI_API_KEY.split('|')[0], // FIX: Correct casing to snake_case
         bank: "paga"
     };
 
