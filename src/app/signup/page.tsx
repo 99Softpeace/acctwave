@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
@@ -10,6 +10,9 @@ import { signIn } from 'next-auth/react';
 
 export default function SignupPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const referralCode = searchParams.get('ref');
+
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [formData, setFormData] = useState({
@@ -31,14 +34,14 @@ export default function SignupPage() {
             return;
         }
 
-
-
         try {
             // 1. Create user account
-            const signupRes = await fetch('/api/auth/signup', {
+            const payload = { ...formData, referralCode };
+
+            const signupRes = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(payload),
             });
 
             const signupData = await signupRes.json();

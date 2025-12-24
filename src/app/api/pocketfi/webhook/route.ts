@@ -206,6 +206,36 @@ export async function POST(req: Request) {
                 // Swallow error ensures primary deposit still succeeds
             }
 
+            // REFERRAL COMMISSION LOGIC: 10% on Every Deposit
+            if (user.referredBy) {
+                try {
+                    const commissionAmount = amount * 0.10;
+                    console.log(`[Referral Commission] Awarding ${commissionAmount} to Referrer ${user.referredBy}`);
+
+                    const referrer = await User.findById(user.referredBy);
+                    if (referrer) {
+                        referrer.referralBalance = (Number(referrer.referralBalance) || 0) + commissionAmount;
+                        await referrer.save();
+
+                        await Transaction.create({
+                            user: referrer._id, // credited to Referrer
+                            amount: commissionAmount,
+                            reference: `REF-${reference}`,
+                            status: 'successful',
+                            type: 'commission',
+                            description: `Commission from ${user.name || 'User'} deposit`,
+                            metadata: {
+                                source_user_id: user._id,
+                                source_reference: reference,
+                                calculation: `${amount} * 0.10`
+                            }
+                        });
+                    }
+                } catch (refErr) {
+                    console.error('[Referral Commission] Error awarding commission:', refErr);
+                }
+            }
+
             await user.save();
             console.log(`Credited user ${user.email}: ${oldBalance} -> ${user.balance}`);
 

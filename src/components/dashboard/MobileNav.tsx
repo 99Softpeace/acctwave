@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, ShoppingBag, Smartphone, CreditCard, AppWindow, Menu, Zap, Wallet, Package, FileText, Settings, LogOut, Shield, ChevronLeft, X, Rocket, PlayCircle } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Smartphone, CreditCard, AppWindow, Menu, Zap, Wallet, Package, FileText, Settings, LogOut, Shield, ChevronLeft, X, Rocket, PlayCircle, Users } from 'lucide-react';
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,6 +19,7 @@ const sidebarLinks = [
     { name: 'VTU & Bills', href: '/dashboard/vtu', icon: CreditCard },
     { name: 'Buy Logs', href: '/dashboard/buy-logs', icon: AppWindow },
     { name: 'Tutorials', href: '/dashboard/tutorials', icon: PlayCircle },
+    { name: 'Refer & Earn', href: '/dashboard/referrals', icon: Users },
     { name: 'API Docs', href: '/dashboard/api-docs', icon: FileText },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
