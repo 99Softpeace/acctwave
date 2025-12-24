@@ -11,7 +11,7 @@ export const resend = new Resend(apiKey || 're_123456789'); // Fallback to preve
 export async function sendEmail(to: string | string[], subject: string, html: string, bcc?: string | string[]) {
     try {
         const data = await resend.emails.send({
-            from: 'Acctwave <onboarding@resend.dev>', // Default Resend testing domain
+            from: 'Acctwave <info@acctwave.com>', // Verified Domain
             to: to,
             bcc: bcc,
             subject: subject,

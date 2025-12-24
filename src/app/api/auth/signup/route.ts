@@ -5,7 +5,7 @@ import User from '@/models/User';
 
 export async function POST(req: Request) {
     try {
-        const { name, email, phoneNumber, password } = await req.json();
+        const { name, email, phoneNumber, password, referralCode } = await req.json();
 
         // Validate input
         if (!name || !email || !password) {
@@ -45,6 +45,15 @@ export async function POST(req: Request) {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Find Referrer (if code provided)
+        let referredBy = null;
+        if (referralCode) {
+            const referrer = await User.findOne({ referralCode });
+            if (referrer) {
+                referredBy = referrer._id;
+            }
+        }
+
         // Create user
         const user = await User.create({
             name,
@@ -53,6 +62,7 @@ export async function POST(req: Request) {
             password: hashedPassword,
             balance: 0, // Start with 0 balance
             role: 'user',
+            referredBy: referredBy
         });
 
         return NextResponse.json(
