@@ -88,7 +88,7 @@ export default function ReferralsPage() {
             {/* Header */}
             <div>
                 <h1 className="text-3xl font-bold text-white mb-2">Refer & Earn</h1>
-                <p className="text-gray-400">Invite friends and earn 10% commission on every deposit they make forever.</p>
+                <p className="text-gray-400">Invite friends and earn 2% commission on every deposit they make forever.</p>
             </div>
 
             {/* Stats Grid */}
@@ -144,7 +144,7 @@ export default function ReferralsPage() {
                         </div>
                     </div>
                     <p className="text-gray-400 text-sm mb-1">Total Referrals</p>
-                    <h2 className="text-2xl font-bold text-white">{data?.activeReferrals || 0}</h2>
+                    <h2 className="text-2xl font-bold text-white">{data?.totalReferrals || 0}</h2>
                 </motion.div>
 
                 {/* Active Referrals */}
@@ -208,7 +208,7 @@ export default function ReferralsPage() {
                         <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                             <div className="w-8 h-8 rounded-full bg-green-500/20 text-green-500 flex items-center justify-center font-bold mb-3">3</div>
                             <h4 className="text-white font-medium mb-1">You Earn</h4>
-                            <p className="text-xs text-gray-400">Get 10% commission instantly on every deposit they make.</p>
+                            <p className="text-xs text-gray-400">Get 2% commission instantly on every deposit they make.</p>
                         </div>
                     </div>
                 </motion.div>

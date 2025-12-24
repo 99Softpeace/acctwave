@@ -45,18 +45,18 @@ export async function POST(req: Request) {
 
         console.log(`[Broadcast] Sending email to ${targets.length} recipients. Subject: ${subject}`);
 
-        // 3. Send via Resend
-        // Note: Resend Free tier has limits. You might want to batch this.
-        // For 'onboarding@resend.dev', you can only send to yourself unless domain is verified.
+        // 3. Send via Resend (Using BCC for Privacy)
+        // We send the email 'To' the sender (admin) and 'Bcc' everyone else.
+        // This prevents users from seeing each other's email addresses.
 
-        // We will loop for individual tracking if needed, or send in batches (Resend supports multiple 'to' in one call, but Bcc is better for privacy)
-        // Best Practice for Broadcast: Use 'bcc' or loop. 
-        // With 'onboarding@resend.dev' you can primarily only send to the registered email.
+        const adminEmail = session.user.email || 'admin@acctwave.com';
 
-        // Attempting to send using Resend's batch or single send
-        // Since we are likely in test mode, let's try sending to the first 50 max per request or individual.
+        // Note: Resend Free tier has limits (e.g. 50 recipients). 
+        // For production with many users, we should use Batch API or loop.
+        // For now, we slice to max 49 for safety if list is huge in this demo.
+        const safeTargets = targets.slice(0, 49);
 
-        const results = await sendEmail(targets, subject, message);
+        const results = await sendEmail(adminEmail, subject, message, safeTargets);
 
         if (results.success) {
             return NextResponse.json({ success: true, count: targets.length });

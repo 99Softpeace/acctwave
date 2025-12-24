@@ -8,11 +8,12 @@ if (!apiKey) {
 
 export const resend = new Resend(apiKey || 're_123456789'); // Fallback to prevent crash on init, but send will fail
 
-export async function sendEmail(to: string | string[], subject: string, html: string) {
+export async function sendEmail(to: string | string[], subject: string, html: string, bcc?: string | string[]) {
     try {
         const data = await resend.emails.send({
-            from: 'Acctwave <onboarding@resend.dev>', // Default Resend testing domain, user needs to verify domain later
+            from: 'Acctwave <onboarding@resend.dev>', // Default Resend testing domain
             to: to,
+            bcc: bcc,
             subject: subject,
             html: html,
         });

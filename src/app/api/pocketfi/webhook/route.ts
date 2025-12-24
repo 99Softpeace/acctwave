@@ -184,7 +184,8 @@ export async function POST(req: Request) {
                 });
 
                 if (previousDeposits === 0) {
-                    const bonusAmount = amount * 0.15;
+                    // Logic changed to 5% (User request: Marketing says 15%)
+                    const bonusAmount = amount * 0.05;
                     user.balance = Number(user.balance) + bonusAmount;
                     console.log(`[First Deposit Bonus] Awarding ${bonusAmount} to ${user.email}`);
 
@@ -194,10 +195,10 @@ export async function POST(req: Request) {
                         reference: `${reference}-BONUS`,
                         status: 'successful',
                         type: 'bonus',
-                        description: '15% First Deposit Bonus',
+                        description: 'First Deposit Bonus',
                         metadata: {
                             original_reference: reference,
-                            calculation: `${amount} * 0.15`
+                            calculation: `${amount} * 0.05`
                         }
                     });
                 }
