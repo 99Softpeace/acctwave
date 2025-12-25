@@ -59,6 +59,7 @@ export default function DashboardPage() {
         { name: 'Foreign Number', icon: <MessageSquare className="w-6 h-6 text-orange-500" />, href: '/dashboard/virtual-numbers', color: 'bg-orange-500/10', borderColor: 'border-orange-500/20' },
         { name: 'Rent Number', icon: <Clock className="w-6 h-6 text-teal-500" />, href: '/dashboard/rent-number', color: 'bg-teal-500/10', borderColor: 'border-teal-500/20' },
         { name: 'Buy Log', icon: <FileText className="w-6 h-6 text-yellow-500" />, href: '/dashboard/buy-logs', color: 'bg-yellow-500/10', borderColor: 'border-yellow-500/20' },
+        { name: 'Refer & Earn', icon: <Users className="w-6 h-6 text-blue-400" />, href: '/dashboard/referrals', color: 'bg-blue-400/10', borderColor: 'border-blue-400/20' },
         // Row 2
         { name: 'Airtime', icon: <Smartphone className="w-6 h-6 text-green-500" />, href: '/dashboard/vtu', color: 'bg-green-500/10', borderColor: 'border-green-500/20' },
         { name: 'Data', icon: <Wifi className="w-6 h-6 text-purple-500" />, href: '/dashboard/vtu', color: 'bg-purple-500/10', borderColor: 'border-purple-500/20' },
@@ -152,9 +153,9 @@ export default function DashboardPage() {
                         <div className="grid grid-cols-4 gap-4">
                             {quickActions.slice(0, 4).map(renderQuickAction)}
                         </div>
-                        {/* Row 2: 3 items */}
+                        {/* Row 2: 4 items */}
                         <div className="grid grid-cols-4 gap-4">
-                            {quickActions.slice(4, 7).map(renderQuickAction)}
+                            {quickActions.slice(4, 8).map(renderQuickAction)}
                         </div>
                     </div>
                 </div>

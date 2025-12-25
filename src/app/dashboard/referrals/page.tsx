@@ -29,8 +29,14 @@ export default function ReferralsPage() {
         fetchData();
     }, []);
 
+    const [origin, setOrigin] = useState('');
+
+    useEffect(() => {
+        setOrigin(window.location.origin);
+    }, []);
+
     const referralLink = data?.referralCode
-        ? `https://www.acctwave.com/signup?ref=${data.referralCode}`
+        ? `${origin}/signup?ref=${data.referralCode}`
         : 'Loading...';
 
     const copyToClipboard = () => {

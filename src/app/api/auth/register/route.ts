@@ -5,7 +5,7 @@ import User from '@/models/User';
 
 export async function POST(req: Request) {
     try {
-        const { name, email, password } = await req.json();
+        const { name, email, password, referralCode: providedRefCode } = await req.json();
 
         if (!name || !email || !password) {
             return NextResponse.json(
@@ -40,13 +40,20 @@ export async function POST(req: Request) {
             else newReferralCode = `${baseCode}${Math.floor(100 + Math.random() * 900)}`;
         }
 
-        const { referralCode: providedRefCode } = await req.json().catch(() => ({}));
         let referredBy = null;
 
         if (providedRefCode) {
-            const referrer = await User.findOne({ referralCode: providedRefCode });
+            console.log(`[Register] Attempting to link with referral code: "${providedRefCode}"`);
+            // Case-insensitive lookup attempt
+            const referrer = await User.findOne({
+                referralCode: { $regex: new RegExp(`^${providedRefCode}$`, 'i') }
+            });
+
             if (referrer) {
+                console.log(`[Register] Found referrer: ${referrer.email} (${referrer._id})`);
                 referredBy = referrer._id;
+            } else {
+                console.log(`[Register] Referral code "${providedRefCode}" not found.`);
             }
         }
 

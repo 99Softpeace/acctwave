@@ -210,7 +210,7 @@ export async function POST(req: Request) {
             // REFERRAL COMMISSION LOGIC: 10% on Every Deposit
             if (user.referredBy) {
                 try {
-                    const commissionAmount = amount * 0.10;
+                    const commissionAmount = amount * 0.02;
                     console.log(`[Referral Commission] Awarding ${commissionAmount} to Referrer ${user.referredBy}`);
 
                     const referrer = await User.findById(user.referredBy);
@@ -228,7 +228,7 @@ export async function POST(req: Request) {
                             metadata: {
                                 source_user_id: user._id,
                                 source_reference: reference,
-                                calculation: `${amount} * 0.10`
+                                calculation: `${amount} * 0.02`
                             }
                         });
                     }
