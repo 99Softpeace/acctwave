@@ -75,9 +75,35 @@ export default function AdminMessagesPage() {
             }
 
             // 2. Send SMS Broadcast (Stub)
+            // 2. Send SMS Broadcast
             if (channels.sms) {
-                // Placeholder for future SMS API
-                console.log('SMS broadcast triggered for:', recipientType);
+                // Get numbers
+                let targetNumbers: string[] = [];
+                if (recipientType === 'specific') {
+                    targetNumbers = users
+                        .filter((u: any) => selectedUsers.includes(u._id) && u.phoneNumber)
+                        .map((u: any) => u.phoneNumber);
+                }
+
+                // If specific is selected but no numbers found
+                if (recipientType === 'specific' && targetNumbers.length === 0) {
+                    // If user selects specific users but none have phone numbers, warn them?
+                    // The API handles validation too, but good to check here.
+                }
+
+                const res = await fetch('/api/admin/broadcast/sms', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        recipientType,
+                        specificNumbers: targetNumbers,
+                        message: message
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'SMS broadcast failed');
+                successMsg += `SMS sent to ${data.count} numbers. `;
             }
 
             toast.dismiss(toastId);
@@ -179,6 +205,9 @@ export default function AdminMessagesPage() {
                                                 <div>
                                                     <div className="text-sm font-bold text-white">{user.name}</div>
                                                     <div className="text-xs text-gray-400">{user.email}</div>
+                                                    <div className={`text-xs ${user.phoneNumber ? 'text-green-400' : 'text-red-400'}`}>
+                                                        {user.phoneNumber || 'No Phone Number'}
+                                                    </div>
                                                 </div>
                                             </div>
                                             {selectedUsers.includes(user._id) && <CheckCircle className="w-5 h-5 text-primary" />}
