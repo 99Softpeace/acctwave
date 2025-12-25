@@ -1,3 +1,8 @@
+
+import { STATIC_DATA_PLANS } from './vtu-plans';
+
+export const DATA_PLANS = STATIC_DATA_PLANS;
+
 const BASE_URL = 'https://ncwallet.africa/api/v1';
 
 // Server-side only check to avoid leaking keys
@@ -33,39 +38,54 @@ async function request(endpoint: string, method: 'GET' | 'POST', body?: any) {
     });
 
     const data = await res.json();
-    return { status: res.status, data };
+    if (!res.ok) {
+        throw new Error(data.message || `API Error: ${res.status}`);
+    }
+    return data;
 }
 
-export async function purchaseAirtime(network: string, phone: string, amount: number, ref: string) {
+export async function purchaseAirtime(network: string, phone: string, amount: number, ref?: string) {
     const networkId = NETWORKS[network.toUpperCase()];
     if (!networkId) throw new Error('Invalid Network');
 
+    // Auto-generate ref if not provided
+    const reference = ref || `AIR-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
     return request('/airtime', 'POST', {
-        ref_id: ref,
+        ref_id: reference,
         network: networkId,
         country_code: 'NG',
         phone_number: phone,
         airtime_type: 'VTU',
         amount: amount.toString(),
-        bypass: true // Ensure duplicate check doesn't block legitimate retries if needed, or set false
+        bypass: false // We want normal processing
     });
 }
 
-export async function purchaseData(network: string, phone: string, planId: number, ref: string) {
+export async function purchaseData(network: string, phone: string, planId: number, ref?: string) {
     const networkId = NETWORKS[network.toUpperCase()];
     if (!networkId) throw new Error('Invalid Network');
 
+    // Auto-generate ref if not provided
+    const reference = ref || `DAT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
     return request('/data', 'POST', {
-        ref_id: ref,
+        ref_id: reference,
         country_code: 'NG',
         network: networkId,
         data_plan: planId.toString(),
         phone_number: phone,
-        bypass: true // As per docs example
+        bypass: false
     });
 }
 
-// Fetch balance or other services if needed
+// Stub to prevent errors if called, though likely not supported by NCWallet same way
+export async function generateDataCard(planId: number, quantity: number, nameOnCard: string) {
+    throw new Error('Data Card generation not supported by this provider');
+}
+
+// Fetch balance and profile
 export async function getBalance() {
-    return request('/user/balance', 'GET');
+    // Expects POST to /user based on docs
+    return request('/user', 'POST', {});
 }

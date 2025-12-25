@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
-import { purchaseAirtime, purchaseData, generateDataCard } from '@/lib/vtu';
+import { purchaseAirtime, purchaseData, generateDataCard } from '@/lib/ncwallet';
 import dbConnect from '@/lib/db';
 
 export async function POST(req: Request) {
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
             // Let's assume for now we trust the client to send 'amount' or we look it up.
             // Since we don't have the plan price in the request body for data, we need to find it.
             // Importing DATA_PLANS here might be needed.
-            const { DATA_PLANS } = await import('@/lib/vtu');
+            const { DATA_PLANS } = await import('@/lib/ncwallet');
             const selectedPlan = DATA_PLANS.find(p => p.id === Number(planId));
 
             if (!selectedPlan) {
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
             apiResponse = await purchaseData(network, phone, Number(planId));
 
         } else if (type === 'datacard') {
-            const { DATA_PLANS } = await import('@/lib/vtu');
+            const { DATA_PLANS } = await import('@/lib/ncwallet');
             const selectedPlan = DATA_PLANS.find(p => p.id === Number(planId));
             if (!selectedPlan) {
                 return NextResponse.json({ success: false, message: 'Invalid Data Plan' }, { status: 400 });
