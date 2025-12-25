@@ -1,5 +1,5 @@
 const POCKETFI_API_KEY = process.env.POCKETFI_API_KEY || '';
-const POCKETFI_SECRET_KEY = process.env.POCKETFI_SECRET_KEY || POCKETFI_API_KEY; // Fallback to API Key if Secret Key is not set
+const POCKETFI_SECRET_KEY = process.env.POCKETFI_SECRET_KEY as string; // Must be set explicitly
 
 const BASE_URL = 'https://api.pocketfi.ng/api/v1';
 
@@ -74,7 +74,13 @@ export async function verifyPayment(reference: string) {
 export async function createVirtualAccount(email: string, name: string, phoneNumber: string) {
     const url = `${BASE_URL}/virtual-accounts/create`;
     console.log(`PocketFi: Creating DVA at ${url}`);
-    console.log(`PocketFi Create: Using Secret Key (Starts with: ${POCKETFI_SECRET_KEY.substring(0, 5)}...)`);
+    const secretKeyPreview = POCKETFI_SECRET_KEY ? POCKETFI_SECRET_KEY.substring(0, 5) : 'MISSING';
+    console.log(`PocketFi Create: Using Secret Key (Starts with: ${secretKeyPreview}...)`);
+
+    if (!POCKETFI_SECRET_KEY) {
+        console.error('CRITICAL: POCKETFI_SECRET_KEY is missing in environment variables');
+        throw new Error('Server Configuration Error: PocketFi Secret Key Missing');
+    }
 
 
     // Split name for potential API requirements
@@ -89,7 +95,7 @@ export async function createVirtualAccount(email: string, name: string, phoneNum
         last_name: lastName,
         phone: phoneNumber,
         email: email,
-        business_id: process.env.POCKETFI_BUSINESS_ID || POCKETFI_API_KEY.split('|')[0], // FIX: Correct casing to snake_case
+        businessId: process.env.POCKETFI_BUSINESS_ID || POCKETFI_API_KEY.split('|')[0], // Fixed: payload uses camelCase
         bank: "paga"
     };
 
@@ -100,7 +106,7 @@ export async function createVirtualAccount(email: string, name: string, phoneNum
     const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${POCKETFI_SECRET_KEY}`, // Using Secret Key for DVA
+            'Authorization': `Bearer ${POCKETFI_API_KEY}`, // Using API Key as Secret Key is failing (401)
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },
