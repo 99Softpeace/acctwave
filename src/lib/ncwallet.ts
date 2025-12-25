@@ -6,8 +6,10 @@ export const DATA_PLANS = STATIC_DATA_PLANS;
 const BASE_URL = 'https://ncwallet.africa/api/v1';
 
 // Server-side only check to avoid leaking keys
-const API_KEY = process.env.NCWALLET_API_KEY;
-const PIN = process.env.NCWALLET_PIN;
+const API_KEY = (process.env.NCWALLET_API_KEY || '').trim();
+const rawPin = (process.env.NCWALLET_PIN || '').trim();
+// Helper to clean PIN if .env is corrupted (e.g. merged lines)
+const PIN = rawPin.length > 6 ? rawPin.substring(0, 4) : rawPin;
 
 if (!API_KEY || !PIN) {
     if (typeof window === 'undefined') { // Only warn on server

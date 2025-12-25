@@ -1,25 +1,5 @@
-const fs = require('fs');
-const path = require('path');
 
-try {
-    const envPath = path.join(process.cwd(), '.env');
-    if (fs.existsSync(envPath)) {
-        const content = fs.readFileSync(envPath, 'utf8');
-        if (content.includes('GMAIL_USER')) {
-            console.log('GMAIL_USER found in .env');
-        } else {
-            console.log('GMAIL_USER NOT found in .env');
-        }
-    } else {
-        console.log('.env file not found');
-    }
-
-    const localEnvPath = path.join(process.cwd(), '.env.local');
-    if (fs.existsSync(localEnvPath)) {
-        console.log('.env.local found');
-    } else {
-        console.log('.env.local NOT found');
-    }
-} catch (error) {
-    console.error('Error reading env files:', error);
-}
+require('dotenv').config({ path: '.env' });
+console.log("API_KEY:", process.env.NCWALLET_API_KEY ? "Loaded (" + process.env.NCWALLET_API_KEY.length + " chars)" : "MISSING");
+console.log("PIN:", process.env.NCWALLET_PIN ? "Loaded (" + process.env.NCWALLET_PIN.length + " chars)" : "MISSING");
+console.log("PIN Value (masked):", process.env.NCWALLET_PIN ? process.env.NCWALLET_PIN.replace(/./g, '*') : "NULL");

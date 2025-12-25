@@ -1,14 +1,11 @@
-require('dotenv').config();
 
-console.log('--- Key Check ---');
-const pk = process.env.POCKETFI_API_KEY;
-const sk = process.env.POCKETFI_SECRET_KEY;
-const bid = process.env.POCKETFI_BUSINESS_ID;
+require('dotenv').config({ path: '.env' });
 
-console.log('POCKETFI_API_KEY:', pk ? pk.substring(0, 10) + '...' : 'MISSING');
-console.log('POCKETFI_SECRET_KEY:', sk ? sk.substring(0, 10) + '...' : 'MISSING');
-console.log('POCKETFI_BUSINESS_ID:', bid || 'MISSING');
+const key = process.env.NCWALLET_API_KEY || '';
+const pin = process.env.NCWALLET_PIN || '';
 
-if (pk === sk && pk) {
-    console.warn('WARNING: API Key and Secret Key are IDENTICAL!');
-}
+console.log(`Key Length: ${key.length}`);
+console.log('Key Char Codes:', key.split('').map(c => c.charCodeAt(0)).join(', '));
+
+console.log(`PIN Length: ${pin.length}`);
+console.log('PIN Char Codes:', pin.split('').map(c => c.charCodeAt(0)).join(', '));

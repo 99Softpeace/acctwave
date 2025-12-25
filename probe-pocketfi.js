@@ -1,104 +1,73 @@
-const axios = require('axios');
-const path = require('path');
+
+require('dotenv').config({ path: '.env' });
+const https = require('https');
 const fs = require('fs');
 
-// Manually parse env
-function parseEnv(filePath) {
-    if (!fs.existsSync(filePath)) return {};
-    const content = fs.readFileSync(filePath, 'utf8');
-    const result = {};
-    content.split('\n').forEach(line => {
-        const match = line.match(/^\s*([\w]+)\s*=\s*(.*)?\s*$/);
-        if (match) {
-            const key = match[1];
-            let value = match[2] || '';
-            if (value.length > 0 && value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') {
-                value = value.replace(/^"|"$/g, '');
-            }
-            result[key] = value.trim();
-        }
-    });
-    return result;
-}
+const API_KEY = process.env.NCWALLET_API_KEY;
+const PIN = process.env.NCWALLET_PIN;
 
-const envConfig = {
-    ...parseEnv(path.join(process.cwd(), '.env')),
-    ...parseEnv(path.join(process.cwd(), '.env.local'))
-};
-
-const SECRET_KEY = envConfig.POCKETFI_SECRET_KEY;
-const BASE_URL = (envConfig.POCKETFI_API_BASE_URL || 'https://api.pocketfi.ng/api/v1').replace(/\/$/, '');
-
-if (!SECRET_KEY) {
-    console.error('❌ POCKETFI_SECRET_KEY not found!');
-    process.exit(1);
-}
-
-console.log(`Using Base URL: ${BASE_URL}`);
-
-const endpointsToTest = [
-    '/accounts/create',
-    '/accounts',
-    '/create-dedicated-account',
-    '/virtual-account/create',
-    '/wallet/create-virtual',
-    '/checkout/request',       // Legacy endpoint check
-    '/api/checkout/request'    // Variation
+const variations = [
+    { name: '1. Header trnx_pin | Auth NoSpace', headers: { 'Authorization': `nc_afr_apikey${API_KEY}`, 'trnx_pin': PIN } },
+    { name: '2. Header trnx_pin | Auth Space', headers: { 'Authorization': `nc_afr_apikey ${API_KEY}`, 'trnx_pin': PIN } },
+    { name: '3. Header trnx_pin | Auth Bearer', headers: { 'Authorization': `Bearer ${API_KEY}`, 'trnx_pin': PIN } },
+    { name: '4. Body trnx_pin | Auth NoSpace', headers: { 'Authorization': `nc_afr_apikey${API_KEY}` }, bodyExtra: { trnx_pin: PIN } },
+    { name: '5. Body pin | Auth NoSpace', headers: { 'Authorization': `nc_afr_apikey${API_KEY}` }, bodyExtra: { pin: PIN } },
+    { name: '6. Header transaction_pin | Auth NoSpace', headers: { 'Authorization': `nc_afr_apikey${API_KEY}`, 'transaction_pin': PIN } }
 ];
 
-async function probe() {
-    let output = `Probe Results (${new Date().toISOString()})\n`;
-    output += `Base URL (Configured): ${BASE_URL}\n\n`;
+const results = [];
 
-    // Test the configured base URL + endpoints
-    for (const endpoint of endpointsToTest) {
-        const url = `${BASE_URL}${endpoint}`;
-        output += await testUrl(url);
+function runTest(index) {
+    if (index >= variations.length) {
+        fs.writeFileSync('probe_result.txt', JSON.stringify(results, null, 2));
+        console.log("Written Results to probe_result.txt");
+        return;
     }
+    const test = variations[index];
 
-    // Test hardcoded generic variations in case Base URL is wrong
-    const hardcodedBases = [
-        'https://api.pocketfi.ng/api/v1',
-        'https://api.pocketfi.ng/v1',
-        'https://api.pocketfi.ng'
-    ];
+    console.log(`Running ${test.name}`);
 
-    output += '\n--- Testing Hardcoded Base URLs ---\n';
+    const bodyArgs = {
+        network: 1,
+        amount: "50",
+        mobile_number: "08012345678",
+        Ported_number: true,
+        airtime_type: "VTU",
+        ref_id: "PROBE2-" + index + "-" + Date.now(),
+        ...(test.bodyExtra || {})
+    };
 
-    for (const base of hardcodedBases) {
-        for (const endpoint of endpointsToTest) {
-            const url = `${base}${endpoint}`.replace(/([^:]\/)\/+/g, "$1"); // Dedupe slashes
-            output += await testUrl(url);
+    const body = JSON.stringify(bodyArgs);
+
+    const options = {
+        hostname: 'ncwallet.africa',
+        path: '/api/v1/airtime',
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(body),
+            ...test.headers
         }
-    }
+    };
 
-    fs.writeFileSync('probe_output_utf8.txt', output, 'utf8');
-    console.log('Probe complete. Results written to probe_output_utf8.txt');
-}
+    const req = https.request(options, (res) => {
+        let data = '';
+        res.on('data', c => data += c);
+        res.on('end', () => {
+            let parsed = null;
+            try { parsed = JSON.parse(data); } catch (e) { parsed = data; }
 
-async function testUrl(url) {
-    let result = '';
-    console.log(`Testing: ${url}`);
-    try {
-        const response = await axios.post(url, {}, {
-            headers: {
-                'Authorization': `Bearer ${SECRET_KEY}`,
-                'Content-Type': 'application/json'
-            }
+            results.push({
+                name: test.name,
+                status: res.statusCode,
+                response: parsed
+            });
+            setTimeout(() => runTest(index + 1), 1000);
         });
-        result = `✅ ${url}: STATUS ${response.status} (Success!)\n`;
-    } catch (error) {
-        if (error.response) {
-            if (error.response.status === 404) {
-                result = `❌ ${url}: 404 Not Found\n`;
-            } else {
-                result = `✅ ${url}: STATUS ${error.response.status} (Route Exists!)\nData: ${JSON.stringify(error.response.data)}\n`;
-            }
-        } else {
-            result = `❌ ${url}: Network Error - ${error.message}\n`;
-        }
-    }
-    return result;
+    });
+
+    req.write(body);
+    req.end();
 }
 
-probe();
+runTest(0);
