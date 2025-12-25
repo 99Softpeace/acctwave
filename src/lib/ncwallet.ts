@@ -5,11 +5,10 @@ export const DATA_PLANS = STATIC_DATA_PLANS;
 
 const BASE_URL = 'https://ncwallet.africa/api/v1';
 
-// Server-side only check to avoid leaking keys
-const API_KEY = (process.env.NCWALLET_API_KEY || '').trim();
-const rawPin = (process.env.NCWALLET_PIN || '').trim();
-// Helper to clean PIN if .env is corrupted (e.g. merged lines)
-const PIN = rawPin.length > 6 ? rawPin.substring(0, 4) : rawPin;
+// Hardcoded API Key as requested by user
+const API_KEY = "live_ncsk_0c4e0f05e73f5c3169d848cc8ad2ea783444e97d";
+// Hardcoded PIN as requested by user
+const PIN = "1914";
 
 if (!API_KEY || !PIN) {
     if (typeof window === 'undefined') { // Only warn on server
@@ -29,7 +28,7 @@ export const NETWORKS: Record<string, NetworkID> = {
 async function request(endpoint: string, method: 'GET' | 'POST', body?: any) {
     const headers: HeadersInit = {
         'Content-Type': 'application/json',
-        'Authorization': `nc_afr_apikey${API_KEY}`,
+        'Authorization': API_KEY, // Changed per Support instructions (Raw Key)
         'trnx_pin': PIN || ''
     };
 
@@ -50,8 +49,8 @@ export async function purchaseAirtime(network: string, phone: string, amount: nu
     const networkId = NETWORKS[network.toUpperCase()];
     if (!networkId) throw new Error('Invalid Network');
 
-    // Auto-generate ref if not provided
-    const reference = ref || `AIR-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    // Auto-generate ref if not provided (Alphanumeric only)
+    const reference = ref || `AIR${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
     return request('/airtime', 'POST', {
         ref_id: reference,
@@ -68,8 +67,8 @@ export async function purchaseData(network: string, phone: string, planId: numbe
     const networkId = NETWORKS[network.toUpperCase()];
     if (!networkId) throw new Error('Invalid Network');
 
-    // Auto-generate ref if not provided
-    const reference = ref || `DAT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    // Auto-generate ref if not provided (Alphanumeric only)
+    const reference = ref || `DAT${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
     return request('/data', 'POST', {
         ref_id: reference,
