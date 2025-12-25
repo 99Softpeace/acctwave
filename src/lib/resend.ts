@@ -14,6 +14,7 @@ export async function sendEmail(to: string | string[], subject: string, html: st
             from: 'AcctWave <support@send.acctwave.com>', // Verified Domain
             to: to,
             bcc: bcc,
+            replyTo: 'support@acctwave.com',
             subject: subject,
             html: html,
         });
