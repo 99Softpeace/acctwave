@@ -20,6 +20,10 @@ export default function DashboardFooter() {
                         <Link href="/api-docs" className="text-gray-500 hover:text-white text-sm transition-colors">
                             API
                         </Link>
+                        <a href="mailto:support@acctwave.com" className="text-gray-500 hover:text-primary text-sm transition-colors flex items-center gap-2">
+                            <Mail className="w-4 h-4" />
+                            support@acctwave.com
+                        </a>
                     </div>
                 </div>
             </div>
