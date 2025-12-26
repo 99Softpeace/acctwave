@@ -11,13 +11,18 @@ export const resend = new Resend(apiKey || 're_123456789'); // Fallback to preve
 export async function sendEmail(to: string | string[], subject: string, html: string, bcc?: string | string[]) {
     try {
         const data = await resend.emails.send({
-            from: 'AcctWave <support@send.acctwave.com>', // Verified Domain
+            from: 'AcctWave <support@acctwave.com>', // Verified Domain
             to: to,
             bcc: bcc,
             replyTo: 'support@acctwave.com',
             subject: subject,
             html: html,
         });
+
+        if (data.error) {
+            console.error('Resend API returned validation error:', data.error);
+            return { success: false, error: data.error };
+        }
 
         return { success: true, data };
     } catch (error) {
