@@ -43,6 +43,12 @@ export async function getServices() {
         const services = await response.json();
         console.log(`[SMM] Fetched ${Array.isArray(services) ? services.length : '0'} services`);
 
+        // Debug: Write first service to file
+        try {
+            const fs = require('fs');
+            fs.writeFileSync('debug_smm_response.json', JSON.stringify(Array.isArray(services) ? services[0] : services, null, 2));
+        } catch (e) { console.error('Write debug file failed', e); }
+
         if (!Array.isArray(services)) {
             console.error('[SMM] Unexpected response format:', JSON.stringify(services).slice(0, 200));
             return [];

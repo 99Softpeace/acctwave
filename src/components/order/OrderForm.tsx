@@ -201,7 +201,7 @@ export default function OrderForm() {
                     serviceName: selectedService.name,
                     link,
                     quantity: parseInt(quantity),
-                    price: parseFloat(totalCost)
+                    price: parseFloat(totalCost.replace(/,/g, ''))
                 }),
             });
 
