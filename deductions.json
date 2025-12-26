@@ -1,0 +1,44 @@
+{
+  "plans": [
+    {
+      "user": "mline5379@gmail.com",
+      "service_id": "3700",
+      "qty": 1000,
+      "costUSD_per_1k": 1.1375,
+      "paid": 2,
+      "truePrice": 2787,
+      "deduct": 2785
+    },
+    {
+      "user": "tosin6474@gmail.com",
+      "service_id": "6811",
+      "qty": 50000,
+      "costUSD_per_1k": 0.0097,
+      "paid": 1,
+      "truePrice": 1189,
+      "deduct": 1188
+    },
+    {
+      "user": "tosin6474@gmail.com",
+      "service_id": "3700",
+      "qty": 1000,
+      "costUSD_per_1k": 1.1375,
+      "paid": 2,
+      "truePrice": 2787,
+      "deduct": 2785
+    },
+    {
+      "user": "tosin6474@gmail.com",
+      "service_id": "1586",
+      "qty": 50000,
+      "costUSD_per_1k": 0.0184,
+      "paid": 2,
+      "truePrice": 2254,
+      "deduct": 2252
+    }
+  ],
+  "summary": {
+    "mline5379@gmail.com": 2785,
+    "tosin6474@gmail.com": 6225
+  }
+}
