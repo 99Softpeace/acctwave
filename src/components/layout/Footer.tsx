@@ -13,7 +13,7 @@ export default function Footer() {
     if (isDashboard) return null;
 
     return (
-        <footer className="bg-black border-t border-white/10 pt-16 pb-8">
+        <footer className="bg-black border-t border-white/10 pt-16 pb-8 relative z-50">
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
                     {/* Brand & Social */}
@@ -104,9 +104,26 @@ export default function Footer() {
                         <ul className="space-y-4">
                             <li className="flex items-center gap-3 text-gray-400 text-sm">
                                 <Mail className="w-5 h-5 text-primary shrink-0" />
-                                <a href="mailto:support@acctwave.com" className="hover:text-white transition-colors">
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        navigator.clipboard.writeText('support@acctwave.com');
+                                        const { toast } = require('react-hot-toast');
+                                        toast.success('Email copied to clipboard!', {
+                                            icon: '📧',
+                                            style: {
+                                                borderRadius: '10px',
+                                                background: '#111426',
+                                                color: '#fff',
+                                                border: '1px solid #333',
+                                            },
+                                        });
+                                        window.location.href = 'mailto:support@acctwave.com';
+                                    }}
+                                    className="hover:text-white transition-colors relative z-[100] cursor-pointer pointer-events-auto"
+                                >
                                     support@acctwave.com
-                                </a>
+                                </button>
                             </li>
                         </ul>
                     </div >
