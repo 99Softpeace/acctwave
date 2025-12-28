@@ -1,0 +1,29 @@
+Checking price of Service 1 (1688) in UK...
+Price Response: {
+  "price": "0.11",
+  "high_price": "0.11",
+  "success_rate": 100
+}
+Buying Service 1 for $0.11...
+Order Response: {
+  "message": "<p>Pool <b>Mike</b>: <p>No numbers available at the moment, please try again later.</p></p>",
+  "success": 0,
+  "pools": {
+    "Mike": {
+      "success": 0,
+      "message": "<p><b>Mike</b> <p>No numbers available at the moment, please try again later.</p></p>",
+      "errors": [
+        {
+          "message": "No numbers available at the moment, please try again later."
+        }
+      ],
+      "type": "OUT_OF_STOCK"
+    }
+  },
+  "errors": [
+    {
+      "message": "No numbers available at the moment, please try again later."
+    }
+  ],
+  "type": "OUT_OF_STOCK"
+}

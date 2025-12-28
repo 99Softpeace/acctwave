@@ -50,53 +50,8 @@ export async function GET(request: Request) {
                     price: calculatePrice(s.cost)
                 }));
             } else {
-                console.log('TextVerified returned empty, falling back to SMSPool for US');
-                // Find US ID from SMSPool countries
-                const usCountry = smsPoolCountries.find((c: any) => c.short_name === 'US' || c.name === 'United States');
-                const usId = usCountry ? usCountry.id : '1'; // Default to 1 if not found
-
-                console.log(`Fetching SMSPool services for US (ID: ${usId})`);
-                const spServices = await SMSPool.getServices(usId);
-
-                // Prioritize popular services
-                const popularServices = ['WhatsApp', 'Telegram', 'Facebook', 'Instagram', 'Twitter', 'Google', 'TikTok', 'Snapchat', 'Uber', 'Netflix', 'Discord', 'Amazon', 'PayPal', 'LinkedIn', 'Microsoft', 'Yahoo', 'Apple', 'Tinder', 'Viber', 'WeChat'];
-
-                const prioritizedServices = spServices.filter(s => popularServices.some(p => s.name.toLowerCase().includes(p.toLowerCase())));
-                const otherServices = spServices.filter(s => !popularServices.some(p => s.name.toLowerCase().includes(p.toLowerCase())));
-
-                // Combine: Popular services first, then others up to a limit
-                // Fetch prices for up to 40 services total to prevent timeout
-                const servicesToFetch = [...prioritizedServices, ...otherServices].slice(0, 40);
-
-                console.log(`Fetching prices for ${servicesToFetch.length} services (including ${prioritizedServices.length} popular ones)...`);
-
-                const servicesWithPrices = await Promise.all(
-                    servicesToFetch.map(async (s) => {
-                        try {
-                            // Add a timeout to the price fetch to prevent hanging
-                            const pricePromise = SMSPool.getPrice(usId, s.id);
-                            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000));
-
-                            const priceUSD = await Promise.race([pricePromise, timeoutPromise]) as number;
-
-                            return {
-                                id: s.id,
-                                name: s.name,
-                                price: calculatePrice(priceUSD)
-                            };
-                        } catch (error) {
-                            console.error(`Failed to fetch price for service ${s.name}:`, error);
-                            // Use a default price if fetching fails or times out
-                            return {
-                                id: s.id,
-                                name: s.name,
-                                price: calculatePrice(0.5) // Default $0.50 USD
-                            };
-                        }
-                    })
-                );
-
-                services = servicesWithPrices.filter(s => s.price > 0);
+                console.log('TextVerified returned empty services for US');
+                services = [];
             }
         } else {
             // For other countries, fetch services and their prices

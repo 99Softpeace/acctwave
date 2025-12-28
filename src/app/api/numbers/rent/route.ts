@@ -56,30 +56,15 @@ export async function POST(req: Request) {
 
         // Let's try this:
         if (countryId === 'US') {
-            try {
-                // Try TextVerified first
-                providerPrefix = 'TV';
-                console.log(`Attempting TextVerified purchase for service ${serviceId}`);
-                const verification = await TextVerified.createVerification(serviceId);
-                rentalResult = {
-                    id: verification.id,
-                    number: verification.number,
-                    expiresIn: 900 // 15 mins default
-                };
-            } catch (tvError: any) {
-                console.log('TextVerified purchase failed, trying SMSPool fallback...', tvError.message);
-                // If TextVerified fails, try SMSPool for US
-                // We need the SMSPool Country ID for US, which is usually '1'
-                // But we should verify.
-                const usId = '1';
-                providerPrefix = 'SP';
-                const order = await SMSPool.orderSMS(usId, serviceId);
-                rentalResult = {
-                    id: order.order_id,
-                    number: order.number,
-                    expiresIn: 900
-                };
-            }
+            // Try TextVerified
+            providerPrefix = 'TV';
+            console.log(`Attempting TextVerified purchase for service ${serviceId}`);
+            const verification = await TextVerified.createVerification(serviceId);
+            rentalResult = {
+                id: verification.id,
+                number: verification.number,
+                expiresIn: 900 // 15 mins default
+            };
         } else {
             // SMSPool for other countries
             providerPrefix = 'SP';

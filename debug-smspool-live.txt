@@ -1,0 +1,40 @@
+
+Checking Discord in Country 0...
+Found Service ID: 273
+Price: $999 (Success Rate: undefined%)
+Too expensive.
+
+Checking Telegram in Country 0...
+Found Service ID: 907
+Price: $999 (Success Rate: undefined%)
+Too expensive.
+
+Checking Discord in Country 16...
+Found Service ID: 273
+Price: $0.15 (Success Rate: 30%)
+Buying...
+ORDER RESPONSE: {"success":1,"number":254771014762,"cc":"254","phonenumber":"771014762","order_id":"AVXOOEV8","orderid":"AVXOOEV8","country":"Kenya","service":"Discord","pool":12,"expires_in":1200,"expiration":1766798595,"message":"You have successfully  ordered a Discord number from pool: Mike","cost":"0.14","cost_in_cents":14.000000000000002,"current_balance":"119.31"}
+SUCCESS! Order ID: AVXOOEV8
+Sleeping 2s...
+Checking Status for AVXOOEV8...
+
+--- CHECK RESPONSE RAW JSON ---
+{
+  "status": 1,
+  "resend": 0,
+  "expiration": 1766798595,
+  "time_left": 1198,
+  "warning": "For high volume requests we recommend using /request/active instead of /sms/check"
+}
+-------------------------------
+
+Cancelling...
+Sleeping 2s...
+Checking Status (Post-Cancel) for AVXOOEV8...
+POST-CANCEL RESPONSE: {
+  "status": 1,
+  "resend": 0,
+  "expiration": 1766798595,
+  "time_left": 1195,
+  "warning": "For high volume requests we recommend using /request/active instead of /sms/check"
+}

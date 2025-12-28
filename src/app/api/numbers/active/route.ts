@@ -27,7 +27,7 @@ export async function GET(req: Request) {
             // Only check if we haven't received code yet
             if (!num.smsCode) {
                 try {
-                    const [provider, id] = num.externalId.split(':');
+                    const [provider, id] = num.externalId ? num.externalId.split(':') : [null, null];
 
                     if (provider === 'TV') {
                         const check = await TextVerified.getVerification(id);
@@ -42,9 +42,14 @@ export async function GET(req: Request) {
                         }
                     } else if (provider === 'SP') {
                         const check = await SMSPool.checkOrder(id);
-                        if (check.code) {
-                            num.smsCode = check.code;
-                            num.fullSms = check.full_code || `Code: ${check.code}`;
+                        console.log(`[SMSPool Check] ID: ${id}, Status: ${check.status}, Code: ${check.code}`);
+
+                        // Check for code OR 'completed' status
+                        if (check.code || check.status === 'COMPLETED' || check.status === '3') {
+                            if (check.code) {
+                                num.smsCode = check.code;
+                                num.fullSms = check.full_code || `Code: ${check.code}`;
+                            }
                             num.status = 'completed';
                             await num.save();
                         } else if (check.status === 'EXPIRED' || check.status === 'REFUNDED') {

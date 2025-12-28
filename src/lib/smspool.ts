@@ -145,8 +145,8 @@ export class SMSPool {
     }
 
     static async checkOrder(orderId: string): Promise<SPOrder> {
-        // Endpoint: /check/sms
-        const data = await this.request('/check/sms', {
+        // Endpoint: /sms/check
+        const data = await this.request('/sms/check', {
             orderid: orderId
         });
 
@@ -155,9 +155,9 @@ export class SMSPool {
             number: data.number, // Might not be in check response
             country: '',
             service: '',
-            status: data.status, // 'PENDING', 'COMPLETED', 'EXPIRED'
-            code: data.sms,
-            full_code: data.full_sms
+            status: mapStatus(data.status, data.sms || data.code), // Map numeric to string
+            code: data.sms || data.code || data.verification_code || data.otp,
+            full_code: data.full_sms || data.text || data.message || data.sms_content
         };
     }
 
@@ -191,4 +191,26 @@ export class SMSPool {
         });
         return data;
     }
+}
+
+function mapStatus(status: number | string, code?: string): string {
+    // If code exists, it's completed regardless of status
+    if (code) return 'COMPLETED';
+
+    // Map numeric status from SMSPool
+    // 1 = Pending
+    // 6 = Refunded/Cancelled (Inferred)
+    // 3 = Completed ??
+    // 13 = Expired ??
+
+    // We treat 'waiting' in frontend as 'active'
+    if (status == 1) return 'PENDING';
+    if (status == 6) return 'REFUNDED';
+    if (status == 13) return 'EXPIRED'; // Often 13 is used
+    if (status == 3) return 'COMPLETED';
+
+    // Fallback for strings
+    if (typeof status === 'string') return status;
+
+    return 'PENDING'; // Default to pending if unknown
 }
