@@ -56,14 +56,46 @@ export async function POST(req: Request) {
 
         // Let's try this:
         if (countryId === 'US') {
-            // Try TextVerified
-            providerPrefix = 'TV';
-            console.log(`Attempting TextVerified purchase for service ${serviceId}`);
-            const verification = await TextVerified.createVerification(serviceId);
+            // Use SMSPool for US (Fallback due to network issues)
+            providerPrefix = 'SP';
+            console.log(`Attempting SMSPool purchase for US service ${serviceId}`);
+
+            // We need to find the US country ID for SMSPool. 
+            // Since we can't easily fetch it here without making another request, 
+            // we'll default to '1' which is standard for US on many panels, 
+            // OR ideally pass it from frontend. 
+            // However, SMSPool.orderSMS takes countryId. 
+            // If the frontend passed 'US', SMSPool might not accept 'US' string if it expects ID.
+            // But looking at SMSPool.orderSMS implementation (viewed previously), it seemingly takes countryId as string.
+            // If the user selected 'US' in frontend, and we fetch services using SMSPool ID for US, 
+            // the `countryId` param here might be 'US' or the numeric ID depending on how frontend sends it.
+            // Frontend sends `selectedCountry`.
+            // If tab is 'us', frontend sets `selectedCountry` to 'US'.
+            // So we need to map 'US' to SMSPool's US ID (usually 1 or 187).
+
+            // Let's safe-guard:
+            // Fetch countries to find US ID? Too slow.
+            // Let's assume '1' is US for SMSPool (common) or try to use 'US' if valid.
+            // Inspecting `smspool.ts` would confirm if it needs ID.
+            // Previous code `SMSPool.getServices(usId)` used `usId`.
+
+            // **CRITICAL**: The frontend sends `countryId: 'US'` when in US tab.
+            // We need to convert 'US' to the correct SMSPool Country ID.
+            // Hardcoding '1' is risky if it changes. 
+            // But we can try '187' (often US on some) or '1'.
+            // Let's checking `smspool.ts` via memory or assume '1' and handle error/lookup.
+            // Actually, best to do a quick lookup or cached lookup.
+
+            // Let's fetch countries to be sure.
+            const allCountries = await SMSPool.getCountries();
+            const usCountry = allCountries.find((c: any) => c.short_name === 'US' || c.name === 'United States');
+            const usId = usCountry ? usCountry.id : '1';
+
+            const order = await SMSPool.orderSMS(usId, serviceId);
             rentalResult = {
-                id: verification.id,
-                number: verification.number,
-                expiresIn: 900 // 15 mins default
+                id: order.order_id,
+                number: order.number,
+                expiresIn: 900
             };
         } else {
             // SMSPool for other countries

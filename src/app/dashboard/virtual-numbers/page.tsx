@@ -29,6 +29,38 @@ interface ActiveNumber {
     expiresAt: string;
 }
 
+function CountdownTimer({ expiresAt }: { expiresAt: string }) {
+    const [timeLeft, setTimeLeft] = useState('');
+
+    useEffect(() => {
+        const updateTimer = () => {
+            const now = new Date().getTime();
+            const end = new Date(expiresAt).getTime();
+            const diff = end - now;
+
+            if (diff <= 0) {
+                setTimeLeft('Expired');
+                return;
+            }
+
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            setTimeLeft(`${minutes}:${seconds < 10 ? '0' : ''}${seconds}`);
+        };
+
+        updateTimer();
+        const interval = setInterval(updateTimer, 1000);
+        return () => clearInterval(interval);
+    }, [expiresAt]);
+
+    return (
+        <span className={`${timeLeft === 'Expired' ? 'text-red-400' : 'text-primary'} font-mono font-bold`}>
+            {timeLeft === 'Expired' ? 'Expired' : `${timeLeft}`}
+        </span>
+    );
+}
+
 export default function VirtualNumbersPage() {
     const [activeTab, setActiveTab] = useState<'us' | 'international'>('us');
 
@@ -445,9 +477,12 @@ export default function VirtualNumbersPage() {
                                     <div className="text-xs text-gray-500 mt-2">{rental.fullSms}</div>
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-2 text-xs text-gray-500 animate-pulse px-1">
-                                    <Clock className="w-3 h-3" />
-                                    Waiting for SMS code...
+                                <div className="flex items-center justify-between text-xs text-gray-500 px-1">
+                                    <div className="flex items-center gap-2 animate-pulse">
+                                        <Clock className="w-3 h-3" />
+                                        Waiting for SMS...
+                                    </div>
+                                    <CountdownTimer expiresAt={rental.expiresAt} />
                                 </div>
                             )}
                         </div>

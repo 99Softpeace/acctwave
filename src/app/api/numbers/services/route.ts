@@ -39,23 +39,13 @@ export async function GET(request: Request) {
 
         // Fetch Services based on selected country
         if (countryId === 'US') {
-            console.log('Fetching TextVerified services for US...');
-            const tvServices = await TextVerified.getServices();
-            console.log(`Fetched ${tvServices.length} TextVerified services`);
+            console.log('Fetching SMSPool services for US (Fallback)...');
 
-            if (tvServices.length > 0) {
-                services = tvServices.map(s => ({
-                    id: s.id,
-                    name: s.name,
-                    price: calculatePrice(s.cost)
-                }));
-            } else {
-                console.log('TextVerified returned empty services for US');
-                services = [];
-            }
-        } else {
-            // For other countries, fetch services and their prices
-            const spServices = await SMSPool.getServices(countryId);
+            // Find US ID from SMSPool countries
+            const usCountry = smsPoolCountries.find((c: any) => c.short_name === 'US' || c.name === 'United States');
+            const usId = usCountry ? usCountry.id : '1'; // Default to 1 (usually US) if not found. 
+
+            const spServices = await SMSPool.getServices(usId);
 
             // Prioritize popular services
             const popularServices = ['WhatsApp', 'Telegram', 'Facebook', 'Instagram', 'Twitter', 'Google', 'TikTok', 'Snapchat', 'Uber', 'Netflix', 'Discord', 'Amazon', 'PayPal', 'LinkedIn', 'Microsoft', 'Yahoo', 'Apple', 'Tinder', 'Viber', 'WeChat'];
@@ -63,20 +53,16 @@ export async function GET(request: Request) {
             const prioritizedServices = spServices.filter(s => popularServices.some(p => s.name.toLowerCase().includes(p.toLowerCase())));
             const otherServices = spServices.filter(s => !popularServices.some(p => s.name.toLowerCase().includes(p.toLowerCase())));
 
-            // Combine: Popular services first, then others up to a limit
-            // Fetch prices for up to 40 services total to prevent timeout
+            // Fetch prices for up to 40 services
             const servicesToFetch = [...prioritizedServices, ...otherServices].slice(0, 40);
 
-            console.log(`Fetching prices for ${servicesToFetch.length} services in country ${countryId} (including ${prioritizedServices.length} popular ones)...`);
+            console.log(`Fetching prices for ${servicesToFetch.length} US services...`);
 
-            // Fetch prices
             const servicesWithPrices = await Promise.all(
                 servicesToFetch.map(async (s) => {
                     try {
-                        // Add a timeout to the price fetch to prevent hanging
-                        const pricePromise = SMSPool.getPrice(countryId, s.id);
+                        const pricePromise = SMSPool.getPrice(usId, s.id);
                         const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000));
-
                         const priceUSD = await Promise.race([pricePromise, timeoutPromise]) as number;
 
                         return {
@@ -85,11 +71,47 @@ export async function GET(request: Request) {
                             price: calculatePrice(priceUSD)
                         };
                     } catch (error) {
-                        console.error(`Failed to fetch price for service ${s.name}:`, error);
                         return {
                             id: s.id,
                             name: s.name,
-                            price: calculatePrice(0.5) // Default $0.50 USD
+                            price: calculatePrice(0.80) // Higher default for US
+                        };
+                    }
+                })
+            );
+
+            services = servicesWithPrices.filter(s => s.price > 0);
+        } else {
+            // For other countries...
+            const spServices = await SMSPool.getServices(countryId);
+            // ... (rest of existing logic for other countries)
+
+            const popularServices = ['WhatsApp', 'Telegram', 'Facebook', 'Instagram', 'Twitter', 'Google', 'TikTok', 'Snapchat', 'Uber', 'Netflix', 'Discord', 'Amazon', 'PayPal', 'LinkedIn', 'Microsoft', 'Yahoo', 'Apple', 'Tinder', 'Viber', 'WeChat'];
+
+            const prioritizedServices = spServices.filter(s => popularServices.some(p => s.name.toLowerCase().includes(p.toLowerCase())));
+            const otherServices = spServices.filter(s => !popularServices.some(p => s.name.toLowerCase().includes(p.toLowerCase())));
+
+            const servicesToFetch = [...prioritizedServices, ...otherServices].slice(0, 40);
+
+            console.log(`Fetching prices for ${servicesToFetch.length} services in country ${countryId}...`);
+
+            const servicesWithPrices = await Promise.all(
+                servicesToFetch.map(async (s) => {
+                    try {
+                        const pricePromise = SMSPool.getPrice(countryId, s.id);
+                        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000));
+                        const priceUSD = await Promise.race([pricePromise, timeoutPromise]) as number;
+
+                        return {
+                            id: s.id,
+                            name: s.name,
+                            price: calculatePrice(priceUSD)
+                        };
+                    } catch (error) {
+                        return {
+                            id: s.id,
+                            name: s.name,
+                            price: calculatePrice(0.5)
                         };
                     }
                 })
