@@ -7,7 +7,7 @@ export async function GET(request: Request) {
     const countryId = searchParams.get('country') || 'US'; // Default to US
 
     try {
-        let services = [];
+        let services: any[] = [];
         let countries = [];
 
         // Fetch Countries
@@ -39,49 +39,34 @@ export async function GET(request: Request) {
 
         // Fetch Services based on selected country
         if (countryId === 'US') {
-            console.log('Fetching SMSPool services for US (Fallback)...');
+            console.log('Fetching TextVerified services for US...');
 
-            // Find US ID from SMSPool countries
-            const usCountry = smsPoolCountries.find((c: any) => c.short_name === 'US' || c.name === 'United States');
-            const usId = usCountry ? usCountry.id : '1'; // Default to 1 (usually US) if not found. 
+            try {
+                // Fetch from TextVerified
+                const tvServices = await TextVerified.getServices();
 
-            const spServices = await SMSPool.getServices(usId);
+                // Map to unified format
+                // TextVerified returns: { id, name, cost }
+                // We need: { id, name, price }
+                services = tvServices.map(s => ({
+                    id: s.id,
+                    name: s.name,
+                    price: calculatePrice(s.cost)
+                }));
 
-            // Prioritize popular services
-            const popularServices = ['WhatsApp', 'Telegram', 'Facebook', 'Instagram', 'Twitter', 'Google', 'TikTok', 'Snapchat', 'Uber', 'Netflix', 'Discord', 'Amazon', 'PayPal', 'LinkedIn', 'Microsoft', 'Yahoo', 'Apple', 'Tinder', 'Viber', 'WeChat'];
+                console.log(`Fetched ${services.length} services from TextVerified`);
 
-            const prioritizedServices = spServices.filter(s => popularServices.some(p => s.name.toLowerCase().includes(p.toLowerCase())));
-            const otherServices = spServices.filter(s => !popularServices.some(p => s.name.toLowerCase().includes(p.toLowerCase())));
-
-            // Fetch prices for up to 40 services
-            const servicesToFetch = [...prioritizedServices, ...otherServices].slice(0, 40);
-
-            console.log(`Fetching prices for ${servicesToFetch.length} US services...`);
-
-            const servicesWithPrices = await Promise.all(
-                servicesToFetch.map(async (s) => {
-                    try {
-                        const pricePromise = SMSPool.getPrice(usId, s.id);
-                        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000));
-                        const priceUSD = await Promise.race([pricePromise, timeoutPromise]) as number;
-
-                        return {
-                            id: s.id,
-                            name: s.name,
-                            price: calculatePrice(priceUSD)
-                        };
-                    } catch (error) {
-                        return {
-                            id: s.id,
-                            name: s.name,
-                            price: calculatePrice(0.80) // Higher default for US
-                        };
-                    }
-                })
-            );
-
-            services = servicesWithPrices.filter(s => s.price > 0);
-        } else {
+            } catch (error) {
+                console.error('Error fetching TextVerified services:', error);
+                // Fallback to empty or specific error? 
+                // For now, let's return empty if strictly routing to TV, or maybe fallback to SMSPool?
+                // The requirement is strict routing: "If Country == USA -> Route to TextVerified."
+                // So if TV fails, we should probably fail or return empty, rather than secretly going to SMSPool which causes "VoIP errors".
+                services = [];
+            }
+        }
+        // Logic for other countries (SMSPool)
+        else {
             // For other countries...
             const spServices = await SMSPool.getServices(countryId);
             // ... (rest of existing logic for other countries)

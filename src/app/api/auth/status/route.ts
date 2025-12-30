@@ -29,7 +29,12 @@ export async function GET() {
             authenticated: true,
             isSuspended: user.toObject().isSuspended // Force toObject to ensure we get plain props
         });
-    } catch (error) {
-        return NextResponse.json({ error: 'Failed to fetch status' }, { status: 500 });
+    } catch (error: any) {
+        console.error('[Status API Error]', error);
+        return NextResponse.json({
+            error: 'Failed to fetch status',
+            details: error.message,
+            stack: error.stack
+        }, { status: 500 });
     }
 }

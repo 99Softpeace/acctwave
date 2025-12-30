@@ -39,6 +39,11 @@ const OrderSchema = new mongoose.Schema({
         type: String,
         default: 'Pending',
     },
+    provider: {
+        type: String,
+        enum: ['textverified', 'smspool', 'daisysms'], // Added daisysms just in case, though we only strictly route TV/SP for now
+        required: false,
+    },
     // Rental specific fields
     phone: {
         type: String,

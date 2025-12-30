@@ -30,6 +30,12 @@ const VirtualNumberSchema = new mongoose.Schema({
         type: String,
         required: true, // ID from the provider (mock ID for now)
     },
+    provider: {
+        type: String,
+        enum: ['textverified', 'smspool'],
+        required: true,
+        default: 'smspool'
+    },
     price: {
         type: Number,
         required: true,
