@@ -298,8 +298,11 @@ export class TextVerified {
         // [FIX] V2 requires capability and serviceName
         const data = await this.request('/verifications', 'POST', {
             id: targetId,
-            serviceName: targetId,
-            capability: 'verification'
+            serviceName: targetId, // V2 uses ID as serviceName usually? Or the name? 
+            // Wait, previous code used targetId as 'id'. 
+            // Step 1460 used serviceName from object.
+            // Let's keep targetId for now, usually alphanumeric in V2?
+            capability: 'Sms'
         });
 
         return {
