@@ -113,8 +113,8 @@ export async function GET(request: Request) {
 
 function calculatePrice(costUSD: number): number {
     const EXCHANGE_RATE = 1750; // Base NGN/USD rate
-    const PROFIT_MARGIN_PERCENT = 40; // 40% profit margin
-    const multiplier = 1 + (PROFIT_MARGIN_PERCENT / 100); // 1.4x
+    const PROFIT_MARGIN_PERCENT = 400; // 400% profit margin
+    const multiplier = 1 + (PROFIT_MARGIN_PERCENT / 100); // 1 + 4 = 5x
     return Math.ceil(costUSD * EXCHANGE_RATE * multiplier);
 }
 
