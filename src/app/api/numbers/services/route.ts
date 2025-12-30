@@ -52,7 +52,7 @@ export async function GET(request: Request) {
                 services = tvServices.map(s => ({
                     id: s.id,
                     name: s.name,
-                    price: calculatePrice(s.cost)
+                    price: calculatePrice(s.cost, 'TV')
                 }));
 
             } catch (error) {
@@ -85,13 +85,13 @@ export async function GET(request: Request) {
                         return {
                             id: s.id,
                             name: s.name,
-                            price: calculatePrice(priceUSD)
+                            price: calculatePrice(priceUSD, 'SMSPOOL')
                         };
                     } catch (error) {
                         return {
                             id: s.id,
                             name: s.name,
-                            price: calculatePrice(0.5)
+                            price: calculatePrice(0.5, 'SMSPOOL')
                         };
                     }
                 })
@@ -111,10 +111,15 @@ export async function GET(request: Request) {
     }
 }
 
-function calculatePrice(costUSD: number): number {
+function calculatePrice(costUSD: number, provider: 'TV' | 'SMSPOOL' = 'TV'): number {
     const EXCHANGE_RATE = 1750; // Base NGN/USD rate
-    const PROFIT_MARGIN_PERCENT = 400; // 400% profit margin
-    const multiplier = 1 + (PROFIT_MARGIN_PERCENT / 100); // 1 + 4 = 5x
+
+    let margin = 70; // Default 70% for SMSPool/Others
+    if (provider === 'TV') {
+        margin = 400; // 400% for TextVerified (USA Premium)
+    }
+
+    const multiplier = 1 + (margin / 100);
     return Math.ceil(costUSD * EXCHANGE_RATE * multiplier);
 }
 
