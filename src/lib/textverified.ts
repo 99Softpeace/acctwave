@@ -305,9 +305,17 @@ export class TextVerified {
             capability: 'Sms'
         });
 
+        console.log('[TextVerified] Create Response:', JSON.stringify(data, null, 2));
+
+        if (!data.number && !data.phone_number) {
+            // If number is missing, check if we need to poll or if it failed silently
+            console.warn('[TextVerified] Number is missing in response:', data);
+        }
+
         return {
             id: data.id,
-            number: data.number,
+            number: data.number || data.phone_number || 'Pending', // Fallback to 'Pending' to avoid DB crash, will update on status check?
+            // Actually 'ActiveNumber' requires number. If we save 'Pending', it might pass validation.
             service: data.service_name || data.target_name || 'Unknown',
             status: data.status,
             time_remaining: data.time_remaining

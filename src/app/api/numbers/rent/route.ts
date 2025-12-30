@@ -87,29 +87,49 @@ export async function POST(req: Request) {
         const expiresAt = new Date();
         expiresAt.setSeconds(expiresAt.getSeconds() + rentalResult.expiresIn);
 
-        const virtualNumber = await VirtualNumber.create({
+        console.log('[Rent] Creating VirtualNumber record:', {
             user: user._id,
             service: serviceId,
-            serviceName: 'Virtual Number', // We could fetch name if needed
             country: countryId,
-            countryName: countryId === 'US' ? 'United States' : countryId,
             number: rentalResult.number,
-            externalId: `${providerPrefix}:${rentalResult.id}`, // Prefix ID to know provider
-            provider: provider,
-            price: actualPrice,
-            status: 'active',
-            expiresAt: expiresAt,
+            externalId: `${providerPrefix}:${rentalResult.id}`,
+            provider
         });
+
+        try {
+            const virtualNumber = await VirtualNumber.create({
+                user: user._id,
+                service: serviceId,
+                serviceName: 'Virtual Number', // We could fetch name if needed
+                country: countryId,
+                countryName: countryId === 'US' ? 'United States' : countryId,
+                number: rentalResult.number,
+                externalId: `${providerPrefix}:${rentalResult.id}`, // Prefix ID to know provider
+                provider: provider,
+                price: actualPrice,
+                status: 'active',
+                expiresAt
+            });
+            console.log('[Rent] VirtualNumber created:', virtualNumber._id);
+        } catch (dbError: any) {
+            console.error('[Rent] Database creation failed:', dbError);
+            throw new Error('Failed to save order to database: ' + dbError.message);
+        }
 
         return NextResponse.json({
             success: true,
             message: 'Number rented successfully',
-            data: virtualNumber,
-            newBalance: user.balance
+            number: rentalResult.number,
+            id: rentalResult.id, // Return raw ID for immediate frontend use if needed
+            expiresIn: rentalResult.expiresIn
         });
 
     } catch (error: any) {
         console.error('Error renting number:', error);
-        return NextResponse.json({ message: error.message || 'Internal server error' }, { status: 500 });
+
+        return NextResponse.json({
+            message: error.message || 'Failed to rent number',
+            details: error.toString()
+        }, { status: 500 });
     }
 }
