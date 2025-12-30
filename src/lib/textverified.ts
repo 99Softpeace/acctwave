@@ -295,8 +295,11 @@ export class TextVerified {
     static async createVerification(targetId: string): Promise<TVVerification> {
         // [FIX] V2 uses serviceName (string) as ID. Do NOT parseInt.
         // Send 'id' as the service identifier.
+        // [FIX] V2 requires capability and serviceName
         const data = await this.request('/verifications', 'POST', {
-            id: targetId
+            id: targetId,
+            serviceName: targetId,
+            capability: 'verification'
         });
 
         return {
