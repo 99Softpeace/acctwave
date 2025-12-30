@@ -155,7 +155,8 @@ export default function VirtualNumbersPage() {
     const fetchServices = async (countryId: string) => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/numbers/services?country=${countryId}`);
+            // [FIX] Add timestamp to prevent caching of outdated pricing
+            const res = await fetch(`/api/numbers/services?country=${countryId}&t=${Date.now()}`);
             const data = await res.json();
             if (data.success) {
                 setServices(data.data || data.services);
@@ -228,7 +229,7 @@ export default function VirtualNumbersPage() {
     return (
         <div className="max-w-xl mx-auto space-y-8">
             <div className="text-center">
-                <h1 className="text-3xl font-bold text-white mb-2">Foreign Numbers</h1>
+                <h1 className="text-3xl font-bold text-white mb-2">Foreign Numbers (Live)</h1>
                 <p className="text-gray-400">Get temporary phone numbers for SMS verification.</p>
             </div>
 
@@ -361,6 +362,7 @@ export default function VirtualNumbersPage() {
                                             <div className="overflow-y-auto flex-1 p-1 custom-scrollbar">
                                                 {services
                                                     .filter(s => s.name.toLowerCase().includes(serviceSearchQuery.toLowerCase()))
+                                                    .slice(0, 50)
                                                     .map((service) => (
                                                         <button
                                                             key={service.id}

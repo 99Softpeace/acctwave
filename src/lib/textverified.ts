@@ -1,9 +1,10 @@
+import { HttpsProxyAgent } from 'https-proxy-agent';
 
 const API_KEY = process.env.TEXTVERIFIED_API_KEY || '';
-const BASE_URL = 'https://www.textverified.com/api/v2';
+const BASE_URL = 'https://www.textverified.com/api/pub/v2';
 
 export interface TVService {
-    id: string; // targetId
+    id: string; // serviceName (string) for V2
     name: string;
     cost: number;
 }
@@ -21,9 +22,14 @@ export interface TVVerification {
 export class TextVerified {
     private static token: string | null = null;
     private static tokenExpiry: number | null = null;
+    public static debugLog: string[] = [];
+
+    private static getAgent() {
+        // [FIX] Disabled proxy for V2 public API
+        return undefined;
+    }
 
     private static async getBearerToken(): Promise<string> {
-        // If we have a valid token, use it
         const currentToken = this.token;
         if (currentToken && this.tokenExpiry && Date.now() < this.tokenExpiry) {
             return currentToken;
@@ -33,19 +39,19 @@ export class TextVerified {
         if (!email) {
             throw new Error('TEXTVERIFIED_EMAIL is not set in .env');
         }
-        if (!API_KEY) {
-            throw new Error('TEXTVERIFIED_API_KEY is not set');
-        }
 
-        console.log('Generating new TextVerified Bearer Token...');
+        const agent = this.getAgent();
 
-        const authString = Buffer.from(`${email}:${API_KEY}`).toString('base64');
-        const response = await fetch(`${BASE_URL}/authentication`, {
+        const response = await fetch(`${BASE_URL}/auth`, {
             method: 'POST',
             headers: {
-                'Authorization': `Basic ${authString}`,
-                'Content-Type': 'application/json' // Even if no body, usually good practice
+                'X-API-KEY': API_KEY,
+                'X-API-USERNAME': email,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
+            // @ts-ignore
+            agent: agent,
             cache: 'no-store'
         });
 
@@ -55,93 +61,61 @@ export class TextVerified {
             throw new Error(`Failed to authenticate with TextVerified: ${response.status} ${errorText.substring(0, 100)}...`);
         }
 
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            console.error('TextVerified Auth Invalid Content-Type:', contentType, text.substring(0, 200));
-            throw new Error('Auth returned non-JSON response');
-        }
-
         let data;
         try {
             data = await response.json();
         } catch (e) {
             console.error('TextVerified Auth JSON Parse Error:', e);
-            throw new Error('Failed to parse Auth response');
+            throw new Error('Auth returned non-JSON response');
         }
 
-        // Use token or bearer_token depending on response structure.
-        // Documentation implies 'token' or 'bearer_token'. 
-        // We'll check both or dump response if debugging needed.
-        // Assuming standard response: { "token": "...", "expiration": "..." } or similar
-
-        const token = data.bearer_token || data.token || data.access_token;
+        const token = data.token || data.bearer_token;
         if (!token) {
-            console.error('TextVerified Auth Response:', data);
             throw new Error('No token found in TextVerified auth response');
         }
 
-        // Set expiry (default 24h if not provided, or parse valid_until/expiration)
-        // Usually data.expiration is ISO string. 
-        // Let's assume 30 mins to be safe if unknown, or parse it.
-        let expiryTime = Date.now() + (30 * 60 * 1000); // 30 mins default
+        let expiryTime = Date.now() + (30 * 60 * 1000);
         if (data.expiration) {
             expiryTime = new Date(data.expiration).getTime();
-        } else if (data.valid_until) {
-            expiryTime = new Date(data.valid_until).getTime();
         }
 
         this.token = token;
-        this.tokenExpiry = expiryTime - (60 * 1000); // Expire 1 min early
+        // Expire 1 minute early to be safe
+        this.tokenExpiry = expiryTime - (60 * 1000);
 
-        console.log('TextVerified Bearer Token generated successfully');
         return token;
     }
 
     private static async request(endpoint: string, method: 'GET' | 'POST' = 'GET', body?: any): Promise<any> {
-        if (!API_KEY) {
-            throw new Error('TEXTVERIFIED_API_KEY is not set');
-        }
-
-        // Get Token
         let token;
         try {
             token = await this.getBearerToken();
         } catch (error) {
-            // Fallback: Try using API Key directly if Auth fails (Legacy/Simple Auth)
-            // But log the error clearly
-            console.warn('Bearer Token generation failed, falling back to Simple Auth (API Key):', error);
-            token = API_KEY;
-            // Note: If using API Key directly, the prefix is usually 'Bearer' still, or 'Simple'? 
-            // Docs say "Simple Authentication uses your access token... as a Bearer token". 
-            // So if `token` is just API_KEY, usage below `Bearer ${token}` is likely correct for Simple Auth too.
+            console.warn('Bearer Token generation failed:', error);
+            throw error;
         }
 
         const headers: Record<string, string> = {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         };
 
-        console.log(`TextVerified Request: ${method} ${BASE_URL}${endpoint}`);
+        const agent = this.getAgent();
 
         const response = await fetch(`${BASE_URL}${endpoint}`, {
             method,
             headers,
             body: body ? JSON.stringify(body) : undefined,
+            // @ts-ignore
+            agent: agent,
             cache: 'no-store'
         });
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error(`TextVerified Error (${endpoint}):`, response.status, errorText.substring(0, 200)); // Log only start clearly
+            console.error(`TextVerified Error (${endpoint}):`, response.status, errorText.substring(0, 200));
             throw new Error(`TextVerified API error: ${response.status} ${errorText.substring(0, 100)}...`);
-        }
-
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            console.error(`TextVerified Invalid Content-Type (${endpoint}): ${contentType}`, text.substring(0, 200));
-            throw new Error(`TextVerified returned non-JSON response (likely Cloudflare block): ${text.substring(0, 50)}...`);
         }
 
         try {
@@ -154,12 +128,43 @@ export class TextVerified {
 
     static async getServices(): Promise<TVService[]> {
         try {
-            const data = await this.request('/targets');
-            return data.map((item: any) => ({
-                id: item.targetId.toString(),
-                name: item.name,
-                cost: item.cost
-            })).sort((a: TVService, b: TVService) => a.name.localeCompare(b.name));
+            // [FIX] V2 returns { serviceName, capability } but no serviceId/cost sometimes
+            const data = await this.request('/services?reservationType=verification&numberType=mobile');
+
+            if (!Array.isArray(data)) return [];
+
+            return data
+                .filter((item: any) => item.serviceName || item.serviceId || item.targetId)
+                .map((item: any) => {
+                    const id = (item.serviceId || item.targetId || item.serviceName || '').toString();
+                    const name = item.name || item.serviceName || item.targetName || 'Unknown';
+                    // [FIX] Use manual pricing map for common services to ensure variance
+                    // default to 2.50 if not found
+                    const COST_MAP: { [key: string]: number } = {
+                        'amazon': 2.0, 'whatsapp': 3.5, 'telegram': 3.0, 'google': 2.5,
+                        'facebook': 2.0, 'instagram': 2.0, 'tiktok': 1.5, 'uber': 2.0,
+                        'twitter': 2.0, 'snapchat': 1.5, 'linkedin': 2.0, 'microsoft': 2.0,
+                        'discord': 1.5, 'openai': 2.5, 'chatgpt': 2.5, 'netflix': 1.5,
+                        'coinbase': 2.5, 'venmo': 2.5, 'paypal': 2.5, 'apple': 2.0,
+                        'tinder': 2.0, 'bumble': 2.0, 'hinge': 2.0, 'grindr': 2.0,
+                        'kakao': 1.5, 'kakaotalk': 1.5, 'viber': 1.5, 'wechat': 3.0,
+                        'line': 1.5, 'signal': 1.5, 'botim': 1.5, 'imo': 1.5
+                    };
+
+                    const lookupName = (item.serviceName || item.name || '').toLowerCase();
+                    const cost = COST_MAP[lookupName] || item.cost || item.price || 2.50;
+
+                    if (lookupName === 'whatsapp') {
+                        TextVerified.debugLog.push(`[TV DEBUG] Found WhatsApp. Lookup: '${lookupName}'. Cost Map value: ${COST_MAP[lookupName]}. Final Cost: ${cost}`);
+                    }
+
+                    return { id, name, cost };
+                })
+                // [FIX] Deduplicate by name to prevent React key errors
+                .filter((item, index, self) =>
+                    index === self.findIndex((t) => t.name === item.name)
+                )
+                .sort((a: TVService, b: TVService) => a.name.localeCompare(b.name));
         } catch (error) {
             console.error('Failed to fetch TextVerified services:', error);
             return [];
@@ -167,14 +172,16 @@ export class TextVerified {
     }
 
     static async createVerification(targetId: string): Promise<TVVerification> {
+        // [FIX] V2 uses serviceName (string) as ID. Do NOT parseInt.
+        // Send 'id' as the service identifier.
         const data = await this.request('/verifications', 'POST', {
-            id: parseInt(targetId)
+            id: targetId
         });
 
         return {
             id: data.id,
             number: data.number,
-            service: data.target_name || 'Unknown',
+            service: data.service_name || data.target_name || 'Unknown',
             status: data.status,
             time_remaining: data.time_remaining
         };
@@ -186,7 +193,7 @@ export class TextVerified {
         return {
             id: data.id,
             number: data.number,
-            service: data.target_name,
+            service: data.service_name || data.target_name,
             status: data.status,
             code: data.code,
             sms: data.sms,
@@ -198,24 +205,26 @@ export class TextVerified {
         await this.request(`/verifications/${id}/cancel`, 'POST');
     }
 
-    // --- Rental Methods ---
-
     static async getRentalServices(): Promise<TVService[]> {
         try {
-            console.log('Fetching TextVerified rental targets...');
-            // Attempting to fetch from /targets first as a fallback if /rental/targets doesn't exist,
-            // but ideally we want specific rental targets.
-            // Let's try /targets?type=rental if possible, or just /targets and assume all are available?
-            // No, rentals are distinct.
-            // Let's try the assumed endpoint.
-            const data = await this.request('/rental/targets');
-            console.log(`Fetched ${data.length} rental targets`);
+            const data = await this.request('/services?reservationType=renewable&numberType=mobile');
 
-            return data.map((item: any) => ({
-                id: item.id.toString(),
-                name: item.name,
-                cost: item.cost
-            })).sort((a: TVService, b: TVService) => a.name.localeCompare(b.name));
+            if (!Array.isArray(data)) return [];
+
+            return data
+                .filter((item: any) => item.serviceName || item.serviceId || item.targetId)
+                .map((item: any) => {
+                    const id = (item.serviceId || item.targetId || item.serviceName || '').toString();
+                    const name = item.name || item.serviceName || 'Unknown';
+                    // [FIX] Default cost to 4.0 for rentals (Approximation since API hides it)
+                    const cost = item.cost || 4.0;
+                    return { id, name, cost };
+                })
+                // [FIX] Deduplicate by name to prevent React key errors
+                .filter((item, index, self) =>
+                    index === self.findIndex((t) => t.name === item.name)
+                )
+                .sort((a: TVService, b: TVService) => a.name.localeCompare(b.name));
         } catch (error) {
             console.error('Failed to fetch TextVerified rental services:', error);
             return [];
@@ -223,8 +232,9 @@ export class TextVerified {
     }
 
     static async purchaseRental(targetId: string, duration: number, unit: 'Days' | 'Weeks' | 'Months', areaCode?: string): Promise<TVVerification> {
+        // [FIX] Use string ID for V2
         const payload: any = {
-            targetId: parseInt(targetId),
+            id: targetId,
             duration,
             unit
         };
@@ -238,7 +248,7 @@ export class TextVerified {
         return {
             id: data.id,
             number: data.number,
-            service: data.target_name || 'Unknown',
+            service: data.service_name || 'Unknown',
             status: 'Pending',
             time_remaining: 'Calculating...'
         };
@@ -249,7 +259,7 @@ export class TextVerified {
         return {
             id: data.id,
             number: data.number,
-            service: data.target_name,
+            service: data.service_name,
             status: data.status,
             code: data.messages?.[0]?.message,
             sms: data.messages?.[0]?.message,

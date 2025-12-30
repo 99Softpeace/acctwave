@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { TextVerified } from '@/lib/textverified';
 import { SMSPool } from '@/lib/smspool';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0; // Disable all caching
+
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const countryId = searchParams.get('country') || 'US'; // Default to US
@@ -13,7 +16,7 @@ export async function GET(request: Request) {
         // Fetch Countries
         // We manually add US for TextVerified, and fetch others from SMSPool
         const smsPoolCountries = await SMSPool.getCountries();
-        console.log('SMSPool Countries (First 5):', JSON.stringify(smsPoolCountries.slice(0, 5)));
+        // console.log('SMSPool Countries (First 5):', JSON.stringify(smsPoolCountries.slice(0, 5)));
 
         // Filter out US from SMSPool
         const otherCountries = smsPoolCountries
@@ -39,8 +42,6 @@ export async function GET(request: Request) {
 
         // Fetch Services based on selected country
         if (countryId === 'US') {
-            console.log('Fetching TextVerified services for US...');
-
             try {
                 // Fetch from TextVerified
                 const tvServices = await TextVerified.getServices();
@@ -54,14 +55,8 @@ export async function GET(request: Request) {
                     price: calculatePrice(s.cost)
                 }));
 
-                console.log(`Fetched ${services.length} services from TextVerified`);
-
             } catch (error) {
                 console.error('Error fetching TextVerified services:', error);
-                // Fallback to empty or specific error? 
-                // For now, let's return empty if strictly routing to TV, or maybe fallback to SMSPool?
-                // The requirement is strict routing: "If Country == USA -> Route to TextVerified."
-                // So if TV fails, we should probably fail or return empty, rather than secretly going to SMSPool which causes "VoIP errors".
                 services = [];
             }
         }

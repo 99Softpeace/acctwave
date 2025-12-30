@@ -184,6 +184,7 @@ export default function RentNumberPage() {
                                         <div className="overflow-y-auto flex-1 p-1 custom-scrollbar">
                                             {services
                                                 .filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                                                .slice(0, 50)
                                                 .map((service) => (
                                                     <button
                                                         key={service.id}
