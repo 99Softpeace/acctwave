@@ -77,7 +77,7 @@ export async function POST(req: Request) {
                 rentalResult = {
                     id: order.order_id,
                     number: order.number,
-                    expiresIn: 900 // 15 mins default
+                    expiresIn: 1200 // 20 mins default
                 };
             } catch (error: any) {
                 console.error('[Rent] SMSPool failed:', error);

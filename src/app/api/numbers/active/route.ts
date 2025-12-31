@@ -149,7 +149,22 @@ export async function GET(req: Request) {
                             }
                             num.status = 'completed';
                             await num.save();
-                        } else if (check.status === 'EXPIRED' || check.status === 'REFUNDED') {
+                        } else if (check.status === 'EXPIRED' || check.status === 'REFUNDED' || new Date() > new Date(num.expiresAt)) {
+                            console.log(`[SMSPool Check] Order ${id} expired/refunded. Processing refund...`);
+
+                            // Refund User (if no code)
+                            if (!num.smsCode) {
+                                try {
+                                    let User = require('@/models/User').default;
+                                    if (!User || !User.findByIdAndUpdate) User = require('@/models/User');
+
+                                    await User.findByIdAndUpdate(num.user, { $inc: { balance: num.price } });
+                                    console.log(`[SMSPool Refund] Refunded ${num.price} for expired order.`);
+                                } catch (e) {
+                                    console.error('[SMSPool Refund] Failed:', e);
+                                }
+                            }
+
                             num.status = 'cancelled';
                             await num.save();
                         }
