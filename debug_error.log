@@ -1,0 +1,160 @@
+[2025-12-30T23:25:34.167Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDRS9J6WFY5YBN7WDG96EQF6"
+}
+---
+[2025-12-30T23:34:57.084Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDRSTQHAV7KNSCE05EW4GVRP"
+}
+---
+[2025-12-30T23:53:11.722Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDRTW5DHN5N3D05RWSZ91KEH"
+}
+---
+[2025-12-30T23:53:11.726Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-30T23:53:12.452Z] [TV Full Details] {
+  "id": "lr_01KDRTW5DHN5N3D05RWSZ91KEH",
+  "number": "7137489586",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDRTW5DHN5N3D05RWSZ91KEH"
+  }
+}
+---
+[2025-12-31T00:05:18.441Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDRVJAAFH2NVYGG8RPF1ETBF"
+}
+---
+[2025-12-31T00:05:18.444Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T00:05:19.251Z] [TV Full Details] {
+  "id": "lr_01KDRVJAAFH2NVYGG8RPF1ETBF",
+  "number": "5513715472",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDRVJAAFH2NVYGG8RPF1ETBF"
+  }
+}
+---
+[2025-12-31T00:37:49.814Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDRXDWP5GJQF4T0G23ZGKF5P"
+}
+---
+[2025-12-31T00:37:49.820Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T00:37:50.513Z] [TV Full Details] {
+  "id": "lr_01KDRXDWP5GJQF4T0G23ZGKF5P",
+  "number": "4583358189",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDRXDWP5GJQF4T0G23ZGKF5P"
+  }
+}
+---
+[2025-12-31T00:46:50.597Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDRXYC9CGAB6KMJA1SJTBTNC"
+}
+---
+[2025-12-31T00:46:50.599Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T00:46:51.526Z] [TV Full Details] {
+  "id": "lr_01KDRXYC9CGAB6KMJA1SJTBTNC",
+  "number": "4706968741",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDRXYC9CGAB6KMJA1SJTBTNC"
+  }
+}
+---
+[2025-12-31T00:59:53.631Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDRYP8MBDFG83AE889ZSVZ2N"
+}
+---
+[2025-12-31T00:59:53.696Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T00:59:54.421Z] [TV Full Details] {
+  "id": "lr_01KDRYP8MBDFG83AE889ZSVZ2N",
+  "number": "3466083862",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDRYP8MBDFG83AE889ZSVZ2N"
+  }
+}
+---
+[2025-12-31T01:09:40.373Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDRZ85TDJWTPGZ9NSE9SR3SG"
+}
+---
+[2025-12-31T01:09:40.377Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T01:09:41.034Z] [TV Full Details] {
+  "id": "lr_01KDRZ85TDJWTPGZ9NSE9SR3SG",
+  "number": "9297937197",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDRZ85TDJWTPGZ9NSE9SR3SG"
+  }
+}
+---
+[2025-12-31T01:19:01.392Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDRZS9K76T3KGE7RF9CP4JBV"
+}
+---
+[2025-12-31T01:19:01.411Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T01:19:02.130Z] [TV Full Details] {
+  "id": "lr_01KDRZS9K76T3KGE7RF9CP4JBV",
+  "number": "9127106258",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDRZS9K76T3KGE7RF9CP4JBV"
+  }
+}
+---
+[2025-12-31T01:30:07.333Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDS0DKWN6GD39Y5E65XWWFAY"
+}
+---
+[2025-12-31T01:30:07.337Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T01:30:07.985Z] [TV Full Details] {
+  "id": "lr_01KDS0DKWN6GD39Y5E65XWWFAY",
+  "number": "3162976197",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDS0DKWN6GD39Y5E65XWWFAY"
+  }
+}
+---
+[2025-12-31T01:57:43.719Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDS205VPAFDYNDGH9Q031WPC"
+}
+---
+[2025-12-31T01:57:43.722Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T01:57:44.411Z] [TV Full Details] {
+  "id": "lr_01KDS205VPAFDYNDGH9Q031WPC",
+  "number": "5129651087",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDS205VPAFDYNDGH9Q031WPC"
+  }
+}
+---
+[2025-12-31T02:18:50.105Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDS36T5VTC96XNSS0PX17NTP"
+}
+---
+[2025-12-31T02:18:50.111Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T02:18:51.835Z] [TV Full Details] {
+  "id": "lr_01KDS36T5VTC96XNSS0PX17NTP",
+  "number": "8566010614",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDS36T5VTC96XNSS0PX17NTP"
+  }
+}
+---

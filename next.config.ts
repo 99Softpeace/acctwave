@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // CRITICAL: Prevent 307 redirects that break webhooks
+  // [FORCE REBUILD 1]vent 307 redirects that break webhooks
   skipTrailingSlashRedirect: true,
   trailingSlash: false,
 

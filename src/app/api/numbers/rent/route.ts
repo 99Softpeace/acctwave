@@ -47,12 +47,18 @@ export async function POST(req: Request) {
 
             try {
                 // Use createVerification for one-time SMS
-                const verification = await TextVerified.createVerification(serviceId);
+                const verificationResponse = await TextVerified.createVerification(serviceId);
+
+                console.log('[API] Rental Result Raw:', JSON.stringify(verificationResponse, null, 2));
+
+                if (!verificationResponse || !verificationResponse.id) {
+                    throw new Error('Failed to rent number: Invalid response from provider');
+                }
 
                 rentalResult = {
-                    id: verification.id,
-                    number: verification.number,
-                    expiresIn: 900 // Default to 15m, or parse verification.time_remaining if needed
+                    id: verificationResponse.id,
+                    number: verificationResponse.number,
+                    expiresIn: 300 // 5 minutes waiting time
                 };
             } catch (error: any) {
                 console.error('[Rent] TextVerified failed:', error);
@@ -126,6 +132,16 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error('Error renting number:', error);
+
+        // [DEBUG LOCAL] Log to file
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const logPath = path.join(process.cwd(), 'debug_error.log');
+            fs.appendFileSync(logPath, `[${new Date().toISOString()}] [Rent FAULT] ${error.toString()}\nStack: ${error.stack}\n---\n`);
+        } catch (e) {
+            console.error('Failed to write log file:', e);
+        }
 
         return NextResponse.json({
             message: error.message || 'Failed to rent number',

@@ -293,29 +293,59 @@ export class TextVerified {
     }
 
     static async createVerification(targetId: string): Promise<TVVerification> {
+        // [FORCE REFRESH 2]
         // [FIX] V2 uses serviceName (string) as ID. Do NOT parseInt.
         // Send 'id' as the service identifier.
         // [FIX] V2 requires capability and serviceName
         const data = await this.request('/verifications', 'POST', {
             id: targetId,
-            serviceName: targetId, // V2 uses ID as serviceName usually? Or the name? 
-            // Wait, previous code used targetId as 'id'. 
-            // Step 1460 used serviceName from object.
-            // Let's keep targetId for now, usually alphanumeric in V2?
+            serviceName: targetId,
             capability: 'Sms'
         });
 
+        // [DEBUG LOCAL] Log to file
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const logPath = path.join(process.cwd(), 'debug_error.log');
+            fs.appendFileSync(logPath, `[${new Date().toISOString()}] [TV Response] ${JSON.stringify(data, null, 2)}\n---\n`);
+        } catch (e) {
+            console.error('Failed to log TV response:', e);
+        }
+
         console.log('[TextVerified] Create Response:', JSON.stringify(data, null, 2));
 
-        if (!data.number && !data.phone_number) {
-            // If number is missing, check if we need to poll or if it failed silently
-            console.warn('[TextVerified] Number is missing in response:', data);
+        // [FIX] Handle V2 response which returns { href: '...' } instead of object
+        if (data.href && !data.number) {
+            try {
+                const fs = require('fs');
+                const path = require('path');
+                const logPath = path.join(process.cwd(), 'debug_error.log');
+                fs.appendFileSync(logPath, `[${new Date().toISOString()}] [TV Href Triggered] Fetching details for ID...\n`);
+            } catch (e) { }
+
+            const parts = data.href.split('/');
+            const newId = parts[parts.length - 1]; // Extract ID from URL
+
+            // Fetch the actual verification object
+            const fullDetails = await this.getVerification(newId);
+
+            try {
+                const fs = require('fs');
+                const path = require('path');
+                const logPath = path.join(process.cwd(), 'debug_error.log');
+                fs.appendFileSync(logPath, `[${new Date().toISOString()}] [TV Full Details] ${JSON.stringify(fullDetails, null, 2)}\n---\n`);
+            } catch (e) { }
+
+            return {
+                ...fullDetails,
+                number: fullDetails.number || 'Pending' // Ensure fallback exists here too
+            };
         }
 
         return {
             id: data.id,
-            number: data.number || data.phone_number || 'Pending', // Fallback to 'Pending' to avoid DB crash, will update on status check?
-            // Actually 'ActiveNumber' requires number. If we save 'Pending', it might pass validation.
+            number: data.number || data.phone_number || 'Pending',
             service: data.service_name || data.target_name || 'Unknown',
             status: data.status,
             time_remaining: data.time_remaining

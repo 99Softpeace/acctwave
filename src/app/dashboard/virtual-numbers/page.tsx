@@ -108,18 +108,18 @@ export default function VirtualNumbersPage() {
         }
     }, [selectedCountry, activeTab]);
 
-    // Poll for SMS updates
+    // Poll for SMS updates (Heartbeat: Every 2 seconds)
     useEffect(() => {
+        // If no numbers, no need to poll
         if (activeNumbers.length === 0) return;
 
-        const interval = setInterval(async () => {
-            if (activeNumbers.some(n => n.status === 'active' && !n.smsCode)) {
-                fetchActiveNumbers();
-            }
-        }, 5000);
+        const interval = setInterval(() => {
+            // Always poll the backend for updates if we have numbers displayed
+            fetchActiveNumbers();
+        }, 2000);
 
         return () => clearInterval(interval);
-    }, [activeNumbers]);
+    }, [activeNumbers.length]); // Only reset if the number of items changes
 
     const fetchData = async () => {
         try {
@@ -445,50 +445,85 @@ export default function VirtualNumbersPage() {
             {activeNumbers.length > 0 && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <h3 className="text-lg font-bold text-white px-2">Active Numbers</h3>
-                    {activeNumbers.map((rental) => (
-                        <div key={rental._id} className="glass-card p-4 rounded-xl border border-white/5">
-                            <div className="flex items-center justify-between mb-3">
-                                <span className="font-bold text-white flex items-center gap-2">
-                                    <Smartphone className="w-4 h-4 text-primary" />
-                                    {rental.serviceName}
-                                    <span className="text-gray-500 text-xs">• {rental.countryName}</span>
-                                </span>
-                                <span className={`text-xs font-mono flex items-center gap-1 px-2 py-1 rounded-full ${rental.status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
-                                    }`}>
-                                    {rental.status === 'completed' ? <CheckCircle className="w-3 h-3" /> : <Loader2 className="w-3 h-3 animate-spin" />}
-                                    {rental.status}
-                                </span>
-                            </div>
+                    {activeNumbers.map((rental) => {
+                        if (!rental) return null;
+                        return (
+                            <div key={rental._id || Math.random()} className="glass-card p-4 rounded-xl border border-white/5">
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="font-bold text-white flex items-center gap-2">
+                                        <Smartphone className="w-4 h-4 text-primary" />
+                                        {rental.serviceName}
+                                        <span className="text-gray-500 text-xs">• {rental.countryName}</span>
+                                    </span>
+                                    <span className={`text-xs font-mono flex items-center gap-1 px-2 py-1 rounded-full ${rental.status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
+                                        }`}>
+                                        {rental.status === 'completed' ? <CheckCircle className="w-3 h-3" /> : <Loader2 className="w-3 h-3 animate-spin" />}
+                                        {rental.status}
+                                    </span>
+                                </div>
 
-                            <div className="flex items-center gap-2 mb-3 bg-black/20 p-3 rounded-lg border border-white/5">
-                                <code className="text-xl text-blue-300 font-mono flex-1 tracking-wide">{rental.number}</code>
-                                <button onClick={() => copyToClipboard(rental.number)} className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white">
-                                    <Copy className="w-4 h-4" />
-                                </button>
-                            </div>
+                                <div className="flex items-center gap-2 mb-3 bg-black/20 p-3 rounded-lg border border-white/5">
+                                    <code className="text-xl text-blue-300 font-mono flex-1 tracking-wide">{rental.number}</code>
+                                    <button onClick={() => copyToClipboard(rental.number)} className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white">
+                                        <Copy className="w-4 h-4" />
+                                    </button>
+                                </div>
 
-                            {rental.smsCode ? (
-                                <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-lg animate-in zoom-in duration-300">
-                                    <p className="text-xs text-green-400 mb-1 font-bold uppercase tracking-wider">SMS Code Received</p>
-                                    <div className="flex items-center gap-2">
-                                        <code className="text-3xl font-bold text-white tracking-[0.2em]">{rental.smsCode}</code>
-                                        <button onClick={() => copyToClipboard(rental.smsCode!)} className="ml-auto p-2 hover:bg-green-500/20 rounded-lg transition-colors text-green-400">
-                                            <Copy className="w-5 h-5" />
+                                {rental.smsCode ? (
+                                    <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-lg animate-in zoom-in duration-300">
+                                        <p className="text-xs text-green-400 mb-1 font-bold uppercase tracking-wider">SMS Code Received</p>
+                                        <div className="flex items-center gap-2">
+                                            <code className="text-3xl font-bold text-white tracking-[0.2em]">{rental.smsCode}</code>
+                                            <button onClick={() => copyToClipboard(rental.smsCode!)} className="ml-auto p-2 hover:bg-green-500/20 rounded-lg transition-colors text-green-400">
+                                                <Copy className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                        <div className="text-xs text-gray-500 mt-2">{rental.fullSms}</div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-between text-xs text-gray-500 px-1 mt-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 animate-pulse text-yellow-500/80">
+                                                <Clock className="w-3 h-3" />
+                                                <span>Waiting...</span>
+                                            </div>
+                                            <span className="text-gray-600">|</span>
+                                            <CountdownTimer expiresAt={rental.expiresAt} />
+                                        </div>
+
+                                        <button
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
+                                                if (!confirm('Are you sure you want to cancel this number and refund remaining balance?')) return;
+
+                                                const toastId = toast.loading('Cancelling...');
+                                                try {
+                                                    const res = await fetch('/api/numbers/cancel', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ numberId: rental._id })
+                                                    });
+                                                    const data = await res.json();
+                                                    if (res.ok && data.success) {
+                                                        toast.success('Order cancelled & refunded', { id: toastId });
+                                                        setActiveNumbers(prev => prev.filter(n => n._id !== rental._id));
+                                                    } else {
+                                                        toast.error(data.message || 'Failed to cancel', { id: toastId });
+                                                    }
+                                                } catch (err) {
+                                                    toast.error('Error cancelling order', { id: toastId });
+                                                }
+                                            }}
+                                            className="flex items-center gap-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 px-2 py-1 rounded transition-colors"
+                                        >
+                                            <Flag className="w-3 h-3" />
+                                            Cancel
                                         </button>
                                     </div>
-                                    <div className="text-xs text-gray-500 mt-2">{rental.fullSms}</div>
-                                </div>
-                            ) : (
-                                <div className="flex items-center justify-between text-xs text-gray-500 px-1">
-                                    <div className="flex items-center gap-2 animate-pulse">
-                                        <Clock className="w-3 h-3" />
-                                        Waiting for SMS...
-                                    </div>
-                                    <CountdownTimer expiresAt={rental.expiresAt} />
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             )}
 
