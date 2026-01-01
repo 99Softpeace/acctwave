@@ -352,14 +352,20 @@ export class TextVerified {
     }
 
     static async getVerification(id: string): Promise<TVVerification> {
-        const data = await this.request(`/verifications/${id}`);
+        const raw = await this.request(`/verifications/${id}`);
+
+        // [DEBUG] Log keys to identify wrapper structure
+        console.log(`[TV LIB] Raw GetVerification Keys for ${id}:`, Object.keys(raw).join(', '));
+
+        // [FIX] Handle V2 'Data' wrapper if present
+        const data = raw.Data || raw;
 
         return {
             id: data.id,
             number: data.number,
             service: data.service_name || data.target_name,
             status: data.status || 'Pending',
-            code: data.code,
+            code: data.code || data.smsCode, // Check smsCode as V2 sometimes uses that
             sms: data.sms,
             time_remaining: data.time_remaining
         };
