@@ -6,7 +6,19 @@ import User from '@/models/User';
 export async function POST(req: Request) {
     try {
         const payload = await req.json();
-        const { id, status, code, sms, cost } = payload;
+
+        // [FIX] ID Extraction Strategy for V2
+        // V2 Webhooks wrap the real resource ID inside a 'Data' object.
+        // Top-level 'id' or 'Id' might be the Webhook Job ID (whj_), which doesn't match our DB.
+        const id = payload.Data?.id || payload.id || payload.Id;
+        const status = payload.Data?.status || payload.status;
+        const code = payload.Data?.code || payload.Data?.smsCode || payload.code;
+        const sms = payload.Data?.sms || payload.sms;
+
+        // Debugging logs to confirm hypothesis
+        console.log(`[TextVerified Webhook] Raw Payload Keys: ${Object.keys(payload).join(', ')}`);
+        if (payload.Data) console.log(`[TextVerified Webhook] Nested Data ID: ${payload.Data.id}`);
+        console.log(`[TextVerified Webhook] Resolved Target ID: ${id}`);
 
         console.log(`[TextVerified Webhook] Received payload for ID: ${id}`, JSON.stringify(payload, null, 2));
 
