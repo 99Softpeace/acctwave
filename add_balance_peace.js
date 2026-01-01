@@ -17,11 +17,10 @@ try {
 
 // Minimal User Schema
 const UserSchema = new mongoose.Schema({
-    balance: { type: Number, default: 0 },
     name: String,
-    email: String
+    email: String,
+    balance: Number
 }, { strict: false });
-
 const User = mongoose.model('User', UserSchema);
 
 async function run() {
@@ -30,24 +29,16 @@ async function run() {
         await mongoose.connect(mongoUri);
         console.log('Connected.');
 
-        const targetName = 'Peace Olowo';
-        const amount = 5000;
-
-        const user = await User.findOne({ name: { $regex: new RegExp(targetName, 'i') } });
-
+        const user = await User.findOne({ name: /Peace Olowo/i });
         if (!user) {
-            console.error(`User "${targetName}" not found.`);
-            return;
+            console.log('User "Peace Olowo" not found.');
+        } else {
+            console.log(`Found user: ${user.name} (${user.email}). Current Balance: ${user.balance}`);
+            // Add 5000 to existing balance
+            user.balance = (user.balance || 0) + 5000;
+            await user.save();
+            console.log(`Balance updated. New Balance: ${user.balance} NGN.`);
         }
-
-        console.log(`Found user: ${user.name} (${user.email})`);
-        console.log(`Old Balance: ${user.balance}`);
-
-        user.balance = (user.balance || 0) + amount;
-        await user.save();
-
-        console.log(`New Balance: ${user.balance}`);
-        console.log(`Added ${amount} NGN successfully.`);
 
     } catch (e) {
         console.error(e);

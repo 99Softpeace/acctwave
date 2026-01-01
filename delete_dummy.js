@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
@@ -17,18 +16,7 @@ try {
 
 const VirtualNumberSchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    service: String,
-    serviceName: String,
-    country: String,
-    countryName: String,
-    number: String,
     externalId: String,
-    provider: String,
-    price: Number,
-    status: String,
-    smsCode: String,
-    fullSms: String,
-    expiresAt: Date,
 }, { timestamps: true });
 
 const VirtualNumber = mongoose.model('VirtualNumber', VirtualNumberSchema);
@@ -36,16 +24,13 @@ const VirtualNumber = mongoose.model('VirtualNumber', VirtualNumberSchema);
 async function run() {
     try {
         await mongoose.connect(mongoUri);
-
-        const numbers = await VirtualNumber.find().sort({ createdAt: -1 }).limit(1);
-        if (numbers.length > 0) {
-            const extId = numbers[0].externalId.replace('TV:', '');
-            require('fs').writeFileSync('db_id.txt', extId);
-            console.log(`Saved ID: ${extId}`);
-        } else {
-            console.log('NO_NUMBERS');
-        }
-
+        const result = await VirtualNumber.deleteMany({
+            $or: [
+                { externalId: 'simulation_dummy_123' },
+                { externalId: 'TV:simulation_dummy_123' }
+            ]
+        });
+        console.log(`Deleted ${result.deletedCount} dummy numbers.`);
     } catch (e) {
         console.error(e);
     } finally {

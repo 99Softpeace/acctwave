@@ -158,3 +158,246 @@
   }
 }
 ---
+[2025-12-31T03:36:36.649Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDS7N7S3WCTC38RT688XEQXQ"
+}
+---
+[2025-12-31T03:36:36.653Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T03:36:37.322Z] [TV Full Details] {
+  "id": "lr_01KDS7N7S3WCTC38RT688XEQXQ",
+  "number": "7253214822",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDS7N7S3WCTC38RT688XEQXQ"
+  }
+}
+---
+[2025-12-31T03:44:16.418Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDS838SQXPK8AGGT18H55V6K"
+}
+---
+[2025-12-31T03:44:16.422Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T03:44:17.078Z] [TV Full Details] {
+  "id": "lr_01KDS838SQXPK8AGGT18H55V6K",
+  "number": "9082409936",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDS838SQXPK8AGGT18H55V6K"
+  }
+}
+---
+[2025-12-31T03:50:06.175Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDS8DY8QXQVPVPPA3D55NS6P"
+}
+---
+[2025-12-31T03:50:06.181Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T03:50:06.896Z] [TV Full Details] {
+  "id": "lr_01KDS8DY8QXQVPVPPA3D55NS6P",
+  "number": "9453947368",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDS8DY8QXQVPVPPA3D55NS6P"
+  }
+}
+---
+[2025-12-31T18:36:26.157Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDTV4VNXCNHRT264FD0YAT9A"
+}
+---
+[2025-12-31T18:36:26.169Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T18:36:27.023Z] [TV Full Details] {
+  "id": "lr_01KDTV4VNXCNHRT264FD0YAT9A",
+  "number": "4452677550",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDTV4VNXCNHRT264FD0YAT9A"
+  }
+}
+---
+[2025-12-31T19:06:42.785Z] [Rent FAULT] Error: Failed to rent US number: TextVerified API error: 404 ...
+Stack: Error: Failed to rent US number: TextVerified API error: 404 ...
+    at POST (C:\Users\ACER\Documents\trae_projects\Acctwave\.next\dev\server\chunks\[root-of-the-server]__50f95319._.js:1432:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async AppRouteRouteModule.do (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:37789)
+    at async AppRouteRouteModule.handle (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:45045)
+    at async responseGenerator (C:\Users\ACER\Documents\trae_projects\Acctwave\.next\dev\server\chunks\node_modules_next_c58d0b99._.js:15485:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:187851)
+    at async handleResponse (C:\Users\ACER\Documents\trae_projects\Acctwave\.next\dev\server\chunks\node_modules_next_c58d0b99._.js:15547:32)
+    at async handler (C:\Users\ACER\Documents\trae_projects\Acctwave\.next\dev\server\chunks\node_modules_next_c58d0b99._.js:15600:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\base-server.js:1413:9)
+    at async DevServer.renderPageComponent (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\base-server.js:1465:24)
+    at async DevServer.renderToResponseImpl (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\base-server.js:1515:32)
+    at async DevServer.pipeImpl (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\base-server.js:1021:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\next-server.js:394:17)
+    at async DevServer.handleRequestImpl (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\base-server.js:912:17)
+    at async C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\dev\next-dev-server.js:382:20
+    at async Span.traceAsyncFn (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\dev\next-dev-server.js:378:24)
+    at async invokeRender (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\lib\router-server.js:240:21)
+    at async handleRequest (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\lib\router-server.js:436:24)
+    at async requestHandlerImpl (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\lib\router-server.js:484:13)
+    at async Server.requestListener (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\lib\start-server.js:226:13)
+---
+[2025-12-31T19:06:57.811Z] [Rent FAULT] Error: Failed to rent US number: TextVerified API error: 404 ...
+Stack: Error: Failed to rent US number: TextVerified API error: 404 ...
+    at POST (C:\Users\ACER\Documents\trae_projects\Acctwave\.next\dev\server\chunks\[root-of-the-server]__50f95319._.js:1432:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async AppRouteRouteModule.do (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:37789)
+    at async AppRouteRouteModule.handle (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:45045)
+    at async responseGenerator (C:\Users\ACER\Documents\trae_projects\Acctwave\.next\dev\server\chunks\node_modules_next_c58d0b99._.js:15485:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:187851)
+    at async handleResponse (C:\Users\ACER\Documents\trae_projects\Acctwave\.next\dev\server\chunks\node_modules_next_c58d0b99._.js:15547:32)
+    at async handler (C:\Users\ACER\Documents\trae_projects\Acctwave\.next\dev\server\chunks\node_modules_next_c58d0b99._.js:15600:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\base-server.js:1413:9)
+    at async DevServer.renderPageComponent (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\base-server.js:1465:24)
+    at async DevServer.renderToResponseImpl (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\base-server.js:1515:32)
+    at async DevServer.pipeImpl (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\base-server.js:1021:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\next-server.js:394:17)
+    at async DevServer.handleRequestImpl (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\base-server.js:912:17)
+    at async C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\dev\next-dev-server.js:382:20
+    at async Span.traceAsyncFn (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\dev\next-dev-server.js:378:24)
+    at async invokeRender (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\lib\router-server.js:240:21)
+    at async handleRequest (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\lib\router-server.js:436:24)
+    at async requestHandlerImpl (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\lib\router-server.js:484:13)
+    at async Server.requestListener (C:\Users\ACER\Documents\trae_projects\Acctwave\node_modules\next\dist\server\lib\start-server.js:226:13)
+---
+[2025-12-31T19:08:51.528Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDTX07ACSW3KYR7K3S40SCCC"
+}
+---
+[2025-12-31T19:08:51.530Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T19:08:52.251Z] [TV Full Details] {
+  "id": "lr_01KDTX07ACSW3KYR7K3S40SCCC",
+  "number": "8288469454",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDTX07ACSW3KYR7K3S40SCCC"
+  }
+}
+---
+[2025-12-31T19:24:07.218Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDTXW63BFHN5C5FJX053MZ60"
+}
+---
+[2025-12-31T19:24:07.220Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T19:24:07.864Z] [TV Full Details] {
+  "id": "lr_01KDTXW63BFHN5C5FJX053MZ60",
+  "number": "8013240767",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDTXW63BFHN5C5FJX053MZ60"
+  }
+}
+---
+[2025-12-31T19:38:20.941Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDTYP75BGENVDBSPN03566BG"
+}
+---
+[2025-12-31T19:38:20.943Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T19:38:22.286Z] [TV Full Details] {
+  "id": "lr_01KDTYP75BGENVDBSPN03566BG",
+  "number": "6815536317",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDTYP75BGENVDBSPN03566BG"
+  }
+}
+---
+[2025-12-31T19:46:13.460Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDTZ4N5SB1SFF4PYYD129C12"
+}
+---
+[2025-12-31T19:46:13.463Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T19:46:14.446Z] [TV Full Details] {
+  "id": "lr_01KDTZ4N5SB1SFF4PYYD129C12",
+  "number": "3204366208",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDTZ4N5SB1SFF4PYYD129C12"
+  }
+}
+---
+[2025-12-31T19:54:51.815Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDTZMFFFJMABM07TPA9DP11P"
+}
+---
+[2025-12-31T19:54:51.827Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T19:54:52.557Z] [TV Full Details] {
+  "id": "lr_01KDTZMFFFJMABM07TPA9DP11P",
+  "number": "8594364781",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDTZMFFFJMABM07TPA9DP11P"
+  }
+}
+---
+[2025-12-31T20:24:12.725Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDV1A6B3YA3WVBGHZD0T9MXJ"
+}
+---
+[2025-12-31T20:24:12.727Z] [TV Href Triggered] Fetching details for ID...
+[2025-12-31T20:24:14.034Z] [TV Full Details] {
+  "id": "lr_01KDV1A6B3YA3WVBGHZD0T9MXJ",
+  "number": "7624014490",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDV1A6B3YA3WVBGHZD0T9MXJ"
+  }
+}
+---
+[2026-01-01T00:24:49.607Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDVF2SE58Z33AN9731SH2F7H"
+}
+---
+[2026-01-01T00:24:49.609Z] [TV Href Triggered] Fetching details for ID...
+[2026-01-01T00:24:50.279Z] [TV Full Details] {
+  "id": "lr_01KDVF2SE58Z33AN9731SH2F7H",
+  "number": "7814702109",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDVF2SE58Z33AN9731SH2F7H"
+  }
+}
+---
+[2026-01-01T02:28:38.071Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDVP5G9AV26YG9A7FEBV4AKR"
+}
+---
+[2026-01-01T02:28:38.083Z] [TV Href Triggered] Fetching details for ID...
+[2026-01-01T02:28:38.800Z] [TV Full Details] {
+  "id": "lr_01KDVP5G9AV26YG9A7FEBV4AKR",
+  "number": "2343131585",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDVP5G9AV26YG9A7FEBV4AKR"
+  }
+}
+---
+[2026-01-01T02:34:12.225Z] [TV Response] {
+  "method": "GET",
+  "href": "https://www.textverified.com/api/pub/v2/verifications/lr_01KDVPFNPYCZ29RMYZ4NDX3GNG"
+}
+---
+[2026-01-01T02:34:12.226Z] [TV Href Triggered] Fetching details for ID...
+[2026-01-01T02:34:12.981Z] [TV Full Details] {
+  "id": "lr_01KDVPFNPYCZ29RMYZ4NDX3GNG",
+  "number": "8456650584",
+  "sms": {
+    "method": "GET",
+    "href": "https://www.textverified.com/api/pub/v2/sms?ReservationId=lr_01KDVPFNPYCZ29RMYZ4NDX3GNG"
+  }
+}
+---

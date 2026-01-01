@@ -53,12 +53,43 @@ export async function GET(req: Request) {
                     let final_sms_message: string | null = null;
 
                     if (provider === 'TV') {
-                        // [WEBHOOK ONLY MODE]
-                        // We disabled polling for TextVerified to rely 100% on the Webhook.
-                        // This prevents race conditions and sets up a cleaner flow.
-                        // The dashboard will still confirm 'active' status from DB, but won't ping TV API.
-                        // If Webhook updates the DB, the next refresh here will pick it up automatically.
-                        // console.log(`[Active Check] TV Polling Skipped for ${id} (Webhook Mode)`);
+                        // [POLLING MODE]
+                        // Webhook has been removed. We now poll TextVerified directly.
+                        console.log(`[Active Check] Polling TextVerified for ID: ${id}`);
+                        const check = await TextVerified.getVerification(id);
+
+                        console.log(`[Active Check] TV Response for ${id}:`, JSON.stringify(check));
+
+                        // 1. Status Update
+                        if (check.status && check.status.toLowerCase() !== num.status) {
+                            num.status = check.status.toLowerCase();
+                            await num.save(); // Save status change immediately
+                        }
+
+                        // 2. Code Received
+                        if (check.code && !num.smsCode) {
+                            num.smsCode = check.code;
+                            num.fullSms = typeof check.sms === 'string' ? check.sms : `Code: ${check.code}`;
+                            num.status = 'completed'; // Force completed if code exists
+                            await num.save();
+                            console.log(`[Active Check] Code received for ${id}: ${check.code}`);
+                        }
+
+                        // 3. Expired/Cancelled Logic
+                        if (check.status === 'Cancelled' || check.status === 'Timed Out' || check.status === 'Refunded') {
+                            if (num.status !== 'cancelled' && num.status !== 'refunded') {
+                                // Refund logic
+                                try {
+                                    const User = require('@/models/User').default || require('@/models/User');
+                                    await User.findByIdAndUpdate(num.user, { $inc: { balance: num.price } });
+                                    num.status = 'cancelled';
+                                    await num.save();
+                                    console.log(`[Active Check] Refunded user for cancelled TV order ${id}`);
+                                } catch (e) {
+                                    console.error('Refund error:', e);
+                                }
+                            }
+                        }
                     } else if (provider === 'SP') {
                         const check = await SMSPool.checkOrder(id);
                         if (check.code || check.status === 'COMPLETED' || check.status === '3') {

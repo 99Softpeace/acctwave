@@ -116,7 +116,7 @@ export default function VirtualNumbersPage() {
         const interval = setInterval(() => {
             // Always poll the backend for updates if we have numbers displayed
             fetchActiveNumbers();
-        }, 2000);
+        }, 4000); // Poll every 4 seconds (Safe for Rate Limits)
 
         return () => clearInterval(interval);
     }, [activeNumbers.length]); // Only reset if the number of items changes
