@@ -1,12 +1,11 @@
 
 import { NextResponse } from 'next/server';
-import { TextVerified } from '@/lib/textverified';
+import { DaisySMS } from '@/lib/daisysms';
 
 export async function GET() {
     try {
-        // Since Rent Number page is currently "Rent USA Virtual Number",
-        // we fetch services from TextVerified.
-        const services = await TextVerified.getRentalServices();
+        // Switching to DaisySMS as requested
+        const services = await DaisySMS.getRentalServices();
         return NextResponse.json({ success: true, data: services });
     } catch (error: any) {
         console.error('Rental Services Error:', error);

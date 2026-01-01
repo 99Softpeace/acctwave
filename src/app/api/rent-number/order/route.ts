@@ -32,65 +32,51 @@ export async function POST(req: Request) {
         }
 
         // 2. Get Service Price
-        // We need to fetch price. Since we assume US (TV), we fetch TV services.
-        // Optimization: cached or direct fetch? TextVerified.getRentalServices
-        const services = await TextVerified.getRentalServices();
+        // Using DaisySMS as requested
+        const services = await DaisySMS.getRentalServices();
         const selectedService = services.find(s => s.id === service);
 
-        // If not found in TV, maybe check SMSPool if we wanted to support it here?
-        // User said "US number only" for TextVerified.
-
         if (!selectedService) {
-            console.error(`Service ${service} not found in TextVerified rentals`);
-            return NextResponse.json({ success: false, error: 'Service not found in US Rental list' }, { status: 400 });
+            console.error(`Service ${service} not found in DaisySMS rentals`);
+            return NextResponse.json({ success: false, error: 'Service not found in Rental list' }, { status: 400 });
         }
 
-        const price = selectedService.cost; // TV uses 'cost' field in our interface
+        const price = selectedService.price;
 
         // 3. Check Balance
         if (user.balance < price) {
             return NextResponse.json({ success: false, error: 'Insufficient balance' }, { status: 400 });
         }
 
-        // 4. Place Order with TextVerified
-        // Note: TV rental APIs usually need duration.
-        const rental = await TextVerified.purchaseRental(service, duration, unit, areaCode);
+        // 4. Place Order with DaisySMS
+        const rental = await DaisySMS.purchaseRental(service, duration, unit, areaCode);
 
         // 5. Deduct Balance & Save Order
         user.balance -= price;
         await user.save();
 
-        // Create Order record
-        // We map TV Rental fields to our Order schema
-        // Order schema expects: external_order_id, phone, etc.
+        // Create Order record with DS prefix
         const newOrder = await Order.create({
             user: user._id,
             type: 'rental',
             service_id: service,
-            service_name: `Rental: ${selectedService.name} (US)`,
+            service_name: `Rental: ${selectedService.name} (DaisySMS)`,
             charge: price,
-            external_order_id: `TV:${rental.id}`, // Prefix with TV: so our status check knows
+            external_order_id: `DS:${rental.id}`,
             status: 'Active',
-            phone: rental.number,
-            expiresAt: new Date(Date.now() + (duration * 24 * 60 * 60 * 1000)), // Approximate expiry based on duration if not returned?
-            // TV 'purchaseRental' mocked return doesn't seem to have exact expiry date in our lib yet, checking lib...
-            // Lib says 'time_remaining': 'Calculating...'.
-            // We'll trust the requested duration for the DB record for now or parse it later.
-            // Wait, rental.expiresAt isn't in TVVerification interface.
-            // Let's rely on status checks.
+            phone: rental.phone,
+            expiresAt: new Date(rental.expiresAt),
             createdAt: new Date(),
         });
 
-        // Return format expected by frontend
-        // Frontend expects: data.phone, data.id, ...
         return NextResponse.json({
             success: true,
             data: {
-                id: newOrder._id, // Return Internal ID for the status poller!
-                phone: rental.number,
+                id: newOrder._id,
+                phone: rental.phone,
                 service: selectedService.name,
                 status: 'active',
-                expiresAt: newOrder.expiresAt ? newOrder.expiresAt.getTime() : Date.now()
+                expiresAt: newOrder.expiresAt.getTime()
             }
         });
 

@@ -54,9 +54,21 @@ export async function GET(req: Request) {
                         statusData.code = spStatus.code;
                         statusData.messages = [{ sender: 'Service', date: new Date().toISOString(), text: spStatus.full_code || spStatus.code }];
                     }
+                } else if (provider === 'DS') {
+                    // Stripping prefix handled by split above
+                    const dsStatus: any = await DaisySMS.getRental(externalId); // Use getRental for long-term/mock
+                    statusData.status = dsStatus.status === 'active' ? 'active' : 'completed';
+                    if (dsStatus.messages && dsStatus.messages.length > 0) {
+                        statusData.messages = dsStatus.messages;
+                        const lastMsg = dsStatus.messages[dsStatus.messages.length - 1]; // Newest?
+                        if (lastMsg.text) {
+                            const code = lastMsg.text.match(/\d{4,8}/)?.[0];
+                            if (code) statusData.code = code;
+                        }
+                    }
                 }
 
-                // Update DB
+                // Update DB (existing block follows...)
                 if (statusData.code && !rental.smsCode) {
                     rental.smsCode = statusData.code;
                     rental.status = 'completed';
@@ -86,8 +98,15 @@ export async function GET(req: Request) {
         // Order model uses different structure
         const order = await Order.findById(id);
         if (order) {
+            // Handle DS: prefix if present
+            let externalId = order.external_order_id;
+            if (externalId && externalId.startsWith('DS:')) {
+                externalId = externalId.replace('DS:', '');
+            }
+
             // Assume DaisySMS for Orders (as per rent-number/order route)
-            const status = await DaisySMS.getStatus(order.external_order_id);
+            // But use the correct method for rentals: getRental (which parses messages)
+            const status = await DaisySMS.getRental(externalId);
             return NextResponse.json({ success: true, data: status });
         }
 

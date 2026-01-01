@@ -203,7 +203,7 @@ export default function RentNumberPage() {
                                                             ? 'bg-primary/20 text-primary'
                                                             : 'bg-white/5 text-gray-500 group-hover:bg-white/10'
                                                             }`}>
-                                                            ₦{service.price.toLocaleString()}
+                                                            ₦{(service.price || 0).toLocaleString()}
                                                         </span>
                                                     </button>
                                                 ))}
