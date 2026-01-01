@@ -15,7 +15,7 @@ export interface TVVerification {
     service: string;
     status: 'Pending' | 'Completed' | 'Timed Out' | 'Cancelled';
     code?: string;
-    sms?: string;
+    sms?: string | { href: string };
     time_remaining?: string;
 }
 
@@ -86,7 +86,7 @@ export class TextVerified {
         return token;
     }
 
-    private static async request(endpoint: string, method: 'GET' | 'POST' = 'GET', body?: any): Promise<any> {
+    public static async request(endpoint: string, method: 'GET' | 'POST' = 'GET', body?: any): Promise<any> {
         let token;
         try {
             token = await this.getBearerToken();
@@ -296,7 +296,6 @@ export class TextVerified {
         // [FORCE REFRESH 2]
         // [FIX] V2 uses serviceName (string) as ID. Do NOT parseInt.
         // Send 'id' as the service identifier.
-        // [FIX] V2 requires capability and serviceName
         const data = await this.request('/verifications', 'POST', {
             id: targetId,
             serviceName: targetId,
@@ -347,7 +346,7 @@ export class TextVerified {
             id: data.id,
             number: data.number || data.phone_number || 'Pending',
             service: data.service_name || data.target_name || 'Unknown',
-            status: data.status,
+            status: data.status || 'Pending',
             time_remaining: data.time_remaining
         };
     }
@@ -359,7 +358,7 @@ export class TextVerified {
             id: data.id,
             number: data.number,
             service: data.service_name || data.target_name,
-            status: data.status,
+            status: data.status || 'Pending',
             code: data.code,
             sms: data.sms,
             time_remaining: data.time_remaining

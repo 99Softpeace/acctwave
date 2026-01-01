@@ -18,17 +18,18 @@ export async function GET(req: Request) {
 
         await dbConnect();
 
-        // Find active numbers
+        // [USER_ID_CHECK]
+        const currentUserId = (session.user as any).id;
+        console.log(`[Active API] Current User Session ID: ${currentUserId}`);
+
         // Find active or recently completed numbers
         const activeNumbers = await VirtualNumber.find({
-            user: (session.user as any).id,
+            user: currentUserId,
             $or: [
                 { status: 'active', expiresAt: { $gt: new Date() } },
                 { status: 'completed' } // Show completed numbers so OTP persists
             ]
         }).sort({ createdAt: -1 });
-
-
 
         console.log(`[Active API] Found ${activeNumbers.length} active numbers for user.`);
 
@@ -45,16 +46,26 @@ export async function GET(req: Request) {
                     if (!provider && num.provider) provider = num.provider;
                     if (!provider && num.externalId && num.externalId.startsWith('TV')) provider = 'TV';
 
+
+
+                    // [NORMALIZATION] Create a single variable for the final code
+                    let final_sms_code: string | null = null;
+                    let final_sms_message: string | null = null;
+
                     if (provider === 'TV') {
                         console.log(`[Active Check] Checking TV ID: ${id}`);
-                        const check = await TextVerified.getVerification(id);
+                        let check = await TextVerified.getVerification(id);
+
+                        try {
+                            const fs = require('fs');
+                            const path = require('path');
+                            fs.appendFileSync(path.join(process.cwd(), 'debug_tv_response.json'), JSON.stringify(check, null, 2) + '\n---\n');
+                        } catch (e) { }
+
                         console.log(`[Active Check] TV Response:`, JSON.stringify(check));
-                        console.log(`[TV Check] ID: ${id}, RAW:`, JSON.stringify(check));
-                        console.log(`[TV Check] Status: ${check.status}, Code: ${check.code || check.sms}`);
 
                         // Sync Timer (if provided)
                         if (check.time_remaining) {
-                            // Format is usually "MM:SS" or "HH:MM:SS"
                             const timeParts = check.time_remaining.split(':').map(Number);
                             let remainingSeconds = 0;
                             if (timeParts.length === 2) remainingSeconds = timeParts[0] * 60 + timeParts[1];
@@ -67,81 +78,83 @@ export async function GET(req: Request) {
                             }
                         }
 
-                        if (check.code || (check.sms && check.sms.length < 10)) { // Simple heuristic for code
-                            num.smsCode = check.code || check.sms;
-                            num.fullSms = check.sms || `Code: ${check.code}`;
+                        // Case 1: TextVerified V2 (SMS is an Object with href)
+                        const isV2Link = check.sms && typeof check.sms !== 'string' && 'href' in check.sms;
+
+                        // [FIX] Stage 1 Wait Logic
+                        // If status is Pending (or undefined/defaulted) and we see a Link, 
+                        // we should WAIT for Stage 2 (Completed + String) or for the Webhook.
+                        // Attempting to follow the link in Stage 1 often yields empty results or errors.
+                        if (isV2Link && (check.status === 'Pending' || !check.status)) {
+                            console.log(`[Active Check] TV Stage 1 (Pending + Link) detected for ${id}. Waiting for Stage 2 or Webhook...`);
+                            // Do not update DB, just return (loop continues effectively for this iteration by doing nothing)
+                            // We need to ensure we don't fall through to other logic that might incorrectly expire it.
+                        }
+                        else if (isV2Link) {
+                            try {
+                                const href = (check.sms as any).href;
+                                const relativePath = href.replace('https://www.textverified.com/api/pub/v2', '');
+                                console.log(`[Active Check] Following TV SMS Link: ${relativePath}`);
+
+                                const smsDetails = await TextVerified.request(relativePath);
+                                console.log(`[Active Check] TV SMS Details:`, JSON.stringify(smsDetails));
+
+                                final_sms_code = smsDetails.code || smsDetails.parsedCode || smsDetails.sms_code;
+                                final_sms_message = smsDetails.message || (typeof smsDetails.sms === 'string' ? smsDetails.sms : null);
+                            } catch (e) {
+                                console.error(`[Active Check] Failed to follow SMS link:`, e);
+                            }
+                        } else {
+                            // Case 2: Standard String Response or Mock Data
+                            if (check.code) final_sms_code = check.code;
+                            if ((check as any).parsedCode) final_sms_code = (check as any).parsedCode;
+
+                            if (typeof check.sms === 'string') {
+                                if (!final_sms_code && check.sms.length < 10) final_sms_code = check.sms;
+                                final_sms_message = check.sms;
+                            }
+                        }
+
+                        // [FINAL SAVING LOGIC]
+                        if (final_sms_code) {
+                            num.smsCode = final_sms_code;
+                            num.fullSms = final_sms_message || `Code: ${final_sms_code}`;
                             num.status = 'completed';
                             await num.save();
-                        } else if (check.status === 'Completed' && check.sms) {
-                            // Sometimes status is completed but code field is empty, but SMS has content
-                            num.smsCode = check.sms.match(/\d{4,8}/)?.[0] || 'CODE'; // Try to extract
-                            num.fullSms = check.sms;
+                            console.log(`[Active Check] Saved Code: ${final_sms_code} for ID: ${id}`);
+                        } else if (check.status === 'Completed' && final_sms_message) {
+                            num.smsCode = final_sms_message.match(/\d{4,8}/)?.[0] || 'CODE';
+                            num.fullSms = final_sms_message;
                             num.status = 'completed';
                             await num.save();
                         } else if (check.status === 'Cancelled' || check.status === 'Timed Out') {
                             console.log(`[TV Check] Order ${id} is ${check.status}. Processing refund...`);
-
-                            // Refund User (if no code)
                             if (!num.smsCode) {
                                 try {
                                     let User = require('@/models/User').default;
                                     if (!User || !User.findByIdAndUpdate) User = require('@/models/User');
-
                                     await User.findByIdAndUpdate(num.user, { $inc: { balance: num.price } });
-                                    console.log(`[TV Check] Refunded ${num.price} for ${check.status} order.`);
-                                } catch (e) {
-                                    console.error('[TV Check] Refund failed:', e);
-                                }
+                                } catch (e) { console.error('[TV Check] Refund failed:', e); }
                             }
-
                             num.status = 'cancelled';
                             await num.save();
                         } else {
-                            // Check for Local Expiration (5 minutes passed?)
                             if (new Date() > new Date(num.expiresAt)) {
-                                console.log(`[Auto-Refund] Number ${num.number} expired without code. Refunding...`);
-
-                                // 1. Cancel on Provider
+                                console.log(`[Auto-Refund] Number ${num.number} expired. Refunding...`);
+                                try { await TextVerified.cancelVerification(id); } catch (e) { }
                                 try {
-                                    await TextVerified.cancelVerification(id);
-                                } catch (e) {
-                                    console.error('[Auto-Refund] Failed to cancel on TV:', e);
-                                }
-
-                                // 2. Refund User
-                                try {
-                                    // Robust import for User model
                                     let User = require('@/models/User').default;
-                                    if (!User || !User.findByIdAndUpdate) {
-                                        User = require('@/models/User');
-                                    }
-
-                                    console.log(`[Auto-Refund] Refunding User ${num.user}, Amount: ${num.price}`);
-                                    const refundRes = await User.findByIdAndUpdate(num.user, { $inc: { balance: num.price } });
-
-                                    if (refundRes) {
-                                        console.log('[Auto-Refund] Refund successful.');
-                                    } else {
-                                        console.error('[Auto-Refund] User not found during refund.');
-                                    }
-
-                                } catch (e) {
-                                    console.error('[Auto-Refund] Failed to refund user:', e);
-                                }
-
-                                // 3. Update Status
+                                    if (!User || !User.findByIdAndUpdate) User = require('@/models/User');
+                                    await User.findByIdAndUpdate(num.user, { $inc: { balance: num.price } });
+                                } catch (e) { }
                                 num.status = 'cancelled';
                                 await num.save();
                             } else {
-                                // Just save the time update if active
                                 await num.save();
                             }
                         }
                     } else if (provider === 'SP') {
                         const check = await SMSPool.checkOrder(id);
-                        console.log(`[SMSPool Check] ID: ${id}, Status: ${check.status}, Code: ${check.code}`);
-
-                        // Check for code OR 'completed' status
                         if (check.code || check.status === 'COMPLETED' || check.status === '3') {
                             if (check.code) {
                                 num.smsCode = check.code;
@@ -150,40 +163,33 @@ export async function GET(req: Request) {
                             num.status = 'completed';
                             await num.save();
                         } else if (check.status === 'EXPIRED' || check.status === 'REFUNDED' || new Date() > new Date(num.expiresAt)) {
-                            console.log(`[SMSPool Check] Order ${id} expired/refunded. Processing refund...`);
-
-                            // Refund User (if no code)
                             if (!num.smsCode) {
                                 try {
                                     let User = require('@/models/User').default;
                                     if (!User || !User.findByIdAndUpdate) User = require('@/models/User');
-
                                     await User.findByIdAndUpdate(num.user, { $inc: { balance: num.price } });
-                                    console.log(`[SMSPool Refund] Refunded ${num.price} for expired order.`);
-                                } catch (e) {
-                                    console.error('[SMSPool Refund] Failed:', e);
-                                }
+                                } catch (e) { }
                             }
-
                             num.status = 'cancelled';
                             await num.save();
                         }
                     }
                 }
-
             } catch (e) {
                 console.error(`Error checking status for ${num.externalId}:`, e);
             }
             return num;
         }));
 
-        return NextResponse.json({
+        const responseData = {
             success: true,
             data: updatedNumbers,
-        });
+        };
+        console.log("SENDING DATA TO FRONTEND:", JSON.stringify(responseData, null, 2));
+        return NextResponse.json(responseData);
 
     } catch (error: any) {
         console.error('Error fetching active numbers:', error);
-        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+        return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
     }
 }
