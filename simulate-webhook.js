@@ -1,83 +1,109 @@
 const http = require('http');
-const crypto = require('crypto');
+const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
 
-// Manually parse env
-function parseEnv(filePath) {
-    if (!fs.existsSync(filePath)) return {};
-    const content = fs.readFileSync(filePath, 'utf8');
-    const result = {};
-    content.split('\n').forEach(line => {
-        const match = line.match(/^\s*([\w]+)\s*=\s*(.*)?\s*$/);
-        if (match) {
-            const key = match[1];
-            let value = match[2] || '';
-            if (value.length > 0 && value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') {
-                value = value.replace(/^"|"$/g, '');
-            }
-            result[key] = value.trim();
-        }
+let mongoUri = '';
+try {
+    const envPath = path.join(process.cwd(), '.env');
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    const match = envContent.match(/MONGODB_URI=(.*)/);
+    if (match) mongoUri = match[1].trim();
+} catch (e) { console.error(e); process.exit(1); }
+
+const VirtualNumberSchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    externalId: String,
+    status: String,
+    number: String,
+    smsCode: String,
+    fullSms: String,
+    provider: String,
+    price: Number,
+    service: String,
+    serviceName: String,
+    country: String,
+    countryName: String,
+    expiresAt: Date
+}, { timestamps: true });
+const VirtualNumber = mongoose.models.VirtualNumber || mongoose.model('VirtualNumber', VirtualNumberSchema);
+
+const userId = new mongoose.Types.ObjectId();
+const TEST_ID = 'webhook_test_123';
+
+async function setup() {
+    if (mongoose.connection.readyState === 0) await mongoose.connect(mongoUri);
+    await VirtualNumber.deleteMany({ externalId: TEST_ID });
+    // Create test number
+    await VirtualNumber.create({
+        user: userId,
+        externalId: TEST_ID,
+        status: 'active',
+        number: '+15550009999',
+        provider: 'textverified',
+        price: 1.50,
+        service: 'whatsapp',
+        serviceName: 'WhatsApp',
+        country: 'us',
+        countryName: 'United States',
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000)
     });
-    return result;
+    console.log('Test number created.');
 }
 
-const envConfig = {
-    ...parseEnv(path.join(process.cwd(), '.env')),
-    ...parseEnv(path.join(process.cwd(), '.env.local'))
-};
+async function verify() {
+    const num = await VirtualNumber.findOne({ externalId: TEST_ID });
+    console.log(`Final Status: ${num?.status}`);
+    console.log(`Final SmsCode: ${num?.smsCode}`);
 
-const SECRET = envConfig.WEBHOOK_SIGNING_SECRET || process.env.WEBHOOK_SIGNING_SECRET;
-const PORT = 3000;
-
-if (!SECRET) {
-    console.error('❌ Error: WEBHOOK_SIGNING_SECRET not found.');
-    process.exit(1);
+    if (num && num.status === 'completed' && num.smsCode === '999888') {
+        console.log('VERIFICATION SUCCESS!');
+    } else {
+        console.log('VERIFICATION FAILED!');
+    }
+    await mongoose.disconnect();
 }
 
-const payload = JSON.stringify({
-    event: 'payment.success',
-    data: {
-        reference: 'TEST-SIM-' + Date.now(),
-        account_number: '9999999999',
-        amount: 5000,
-        sender_bank: 'Test Bank',
-        sender_name: 'Test Sender'
-    }
-});
-
-const signature = crypto.createHmac('sha512', SECRET)
-    .update(payload)
-    .digest('hex');
-
-const options = {
-    hostname: 'localhost',
-    port: PORT,
-    path: '/api/pocketfi/webhook',
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-        'x-pocketfi-signature': signature,
-        'Content-Length': payload.length
-    }
-};
-
-console.log('Sending webhook to port ' + PORT + '...');
-
-const req = http.request(options, (res) => {
-    console.log(`STATUS: ${res.statusCode}`);
-    res.setEncoding('utf8');
-    res.on('data', (chunk) => {
-        console.log(`BODY: ${chunk}`);
+function sendWebhook() {
+    return new Promise((resolve) => {
+        const payload = JSON.stringify({
+            id: TEST_ID,
+            status: 'Completed',
+            code: '999888',
+            sms: 'Your code is 999888',
+            cost: 1.50
+        });
+        const options = {
+            hostname: 'localhost',
+            port: 3000,
+            path: '/api/webhooks/textverified',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        };
+        const req = http.request(options, (res) => {
+            console.log(`Response Status: ${res.statusCode}`);
+            let data = '';
+            res.on('data', c => data += c);
+            res.on('end', () => {
+                console.log(`Response Body: ${data}`);
+                resolve();
+            });
+        });
+        req.on('error', e => { console.error(e); resolve(); });
+        req.write(payload);
+        req.end();
     });
-    res.on('end', () => {
-        console.log('No more data in response.');
-    });
-});
+}
 
-req.on('error', (e) => {
-    console.error(`problem with request: ${e.message}`);
-});
-
-req.write(payload);
-req.end();
+async function run() {
+    try {
+        await setup();
+        await sendWebhook();
+        console.log('Waiting 5s...');
+        setTimeout(verify, 5000);
+    } catch (e) {
+        console.error(e);
+        await mongoose.disconnect();
+    }
+}
+run();
