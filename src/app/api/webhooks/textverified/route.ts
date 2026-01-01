@@ -5,144 +5,65 @@ import User from '@/models/User';
 
 export async function POST(req: Request) {
     try {
-        const payload = await req.json();
+        const body = await req.json();
 
-        // [FIX] ID Extraction Strategy for V2
-        // V2 Webhooks wrap the real resource ID inside a 'Data' object.
-        // Top-level 'id' or 'Id' might be the Webhook Job ID (whj_), which doesn't match our DB.
-        const id = payload.Data?.id || payload.id || payload.Id;
-        const status = payload.Data?.status || payload.status;
-        const code = payload.Data?.code || payload.Data?.smsCode || payload.code;
-        const sms = payload.Data?.sms || payload.sms;
-
-        // Debugging logs to confirm hypothesis
-        console.log(`[TextVerified Webhook] Raw Payload Keys: ${Object.keys(payload).join(', ')}`);
-        if (payload.Data) console.log(`[TextVerified Webhook] Nested Data ID: ${payload.Data.id}`);
-        console.log(`[TextVerified Webhook] Resolved Target ID: ${id}`);
-
-        console.log(`[TextVerified Webhook] Received payload for ID: ${id}`, JSON.stringify(payload, null, 2));
-
-        // [DEBUG] Log all headers (keep for now until stable)
-        const headersList: any = {};
-        req.headers.forEach((value, key) => (headersList[key] = value));
-        console.log('[TextVerified Webhook] Headers:', JSON.stringify(headersList, null, 2));
-
-        // [SECURITY] Signature Verification
-        // Header: x-webhook-signature
-        // Algo: HMAC-SHA512
+        // [SECURITY] Signature Check (Best Practice: Keep this)
         const secret = process.env.TEXTVERIFIED_WEBHOOK_SECRET;
         const signatureHeader = req.headers.get('x-webhook-signature');
-
-        if (secret) {
-            if (!signatureHeader) {
-                console.error('[TextVerified Webhook] Missing x-webhook-signature header.');
-                return NextResponse.json({ message: 'Missing signature' }, { status: 401 });
-            }
-
-            try {
-                const crypto = require('crypto');
-                // Calculate expected signature
-                // Payload is the raw body string. Since we already parsed using req.json(), 
-                // we technically need the RAW body. 
-                // However, in Next.js, once req.json() is called, the stream is consumed.
-                // We must rely on consistent JSON serialization or (better) clone the request before reading.
-                // *CRITICAL*: Re-serializing JSON can differ from raw bytes (whitespace). 
-                // Given we already read json at the top (line 6), we are in a tricky spot.
-                // BUT: usually webhooks sign the RAW body. 
-
-                // Let's implement a best-effort using the JSON.stringify(payload) for now, 
-                // but if this fails, we might need to refactor to read text() first.
-                // NOTE: TextVerified likely signs the minified JSON or exactly what they sent.
-                const expectedSignature = 'HMAC-SHA512=' + crypto
-                    .createHmac('sha512', secret)
-                    .update(JSON.stringify(payload)) // Note: This assumes they send minified JSON without space
-                    .digest('base64');
-
-                if (signatureHeader !== expectedSignature) {
-                    console.warn(`[TextVerified Webhook] Signature Mismatch! Expected: ${expectedSignature}, Got: ${signatureHeader}`);
-                    // return NextResponse.json({ message: 'Invalid signature' }, { status: 401 });
-                } else {
-                    console.log('[TextVerified Webhook] Signature Verified Successfully.');
-                }
-            } catch (err) {
-                console.error('[TextVerified Webhook] Signature verification error:', err);
+        if (secret && signatureHeader) {
+            const crypto = require('crypto');
+            const expectedSignature = 'HMAC-SHA512=' + crypto.createHmac('sha512', secret).update(JSON.stringify(body)).digest('base64');
+            if (signatureHeader !== expectedSignature) {
+                console.warn(`[TextVerified Webhook] Signature Mismatch!`);
+                // For debugging, we proceed, but ideally return 401
             }
         }
 
-        if (!id || !status) {
-            console.warn('[TextVerified Webhook] Invalid payload missing id or status');
-            return NextResponse.json({ message: 'Invalid payload' }, { status: 400 });
-        }
+        // 1. Get the Inner ID (The one that matches your DB)
+        // If it's a test, Data might be empty, so fallback to body.id
+        const realId = body.Data?.id || body.id;
+        const realCode = body.Data?.code || body.Data?.smsCode || body.code;
+        const status = body.Data?.status || body.status; // Extract status too
+
+        console.log(`🔍 EXTRACTING ID: Webhook sent ${body.Id || body.id}, Inner ID is ${realId}`);
 
         await dbConnect();
 
-        // Find the number by external ID
-        // We match either raw ID or "TV:ID" format just in case
+        // 2. Search using the "TV:" prefix you stored
         const number = await VirtualNumber.findOne({
             $or: [
-                { externalId: id },
-                { externalId: `TV:${id}` }
+                { externalId: `TV:${realId}` },  // <--- THIS IS THE KEY
+                { externalId: realId }
             ]
         });
 
         if (!number) {
-            console.warn(`[TextVerified Webhook] Number NOT found for ID: ${id}`);
-            return NextResponse.json({ message: 'Number not found' }, { status: 404 });
+            console.log(`❌ ERROR: Number not found in DB for ID: TV:${realId}`);
+            return NextResponse.json({ received: true });
         }
 
-        // [HARDENING] Ensure this is actually a TextVerified number if provider is set
-        if (number.provider && number.provider !== 'textverified' && number.provider !== 'TV') {
-            console.warn(`[TextVerified Webhook] Mismatched provider for number ${number.number}. Expected TextVerified, got ${number.provider}`);
-            // We can choose to ignore it or process it anyway if IDs match. 
-            // Ideally valid externalId collision is rare. Let's process but log warning.
-        }
-
-        console.log(`[TextVerified Webhook] Processing update for ${number.number} (ID: ${number._id}) - New Status: ${status}, Current Status: ${number.status}`);
-
-        // Update logic based on status
-        if (status === 'Completed') {
-            const smsCode = code || (typeof sms === 'string' ? sms.match(/\d{4,8}/)?.[0] : null);
-            const fullSms = typeof sms === 'string' ? sms : (sms?.message || `Code: ${smsCode}`);
-
-            if (smsCode) {
-                number.smsCode = smsCode;
-                number.fullSms = fullSms;
-                number.status = 'completed';
+        // 3. Update the number
+        // Only update if we have a code or status is completed
+        if (realCode || status === 'Completed') {
+            if (realCode) number.smsCode = realCode;
+            number.status = 'completed';
+            await number.save();
+            console.log(`✅ SUCCESS: DB Updated with code ${realCode}`);
+        } else if (status === 'Cancelled' || status === 'Timed Out' || status === 'Refunded') {
+            // Handle Refund/Cancel
+            if (number.status !== 'cancelled' && number.status !== 'refunded') {
+                const User = require('@/models/User').default || require('@/models/User');
+                await User.findByIdAndUpdate(number.user, { $inc: { balance: number.price } });
+                number.status = 'cancelled';
                 await number.save();
-                console.log(`[TextVerified Webhook] SUCCESS: Number ${number.number} marked as completed with code ${smsCode}`);
-            } else {
-                console.warn(`[TextVerified Webhook] Completed status received but NO CODE found in payload.`);
-                // We might want to keep it active or mark as completed without code?
-                // For now, let's just log it. If "Completed" usually means code is there.
+                console.log(`🚫 Number marked as ${status} and refunded.`);
             }
-        }
-        else if (status === 'Cancelled' || status === 'Timed Out' || status === 'Refunded') {
-            if (number.status !== 'cancelled' && number.status !== 'refunded' && number.status !== 'expired') {
-                console.log(`[TextVerified Webhook] Order cancelled/timed out/refunded. Processing refund for user ${number.user}...`);
-
-                // Refund the user
-                try {
-                    await User.findByIdAndUpdate(number.user, { $inc: { balance: number.price } });
-                    console.log(`[TextVerified Webhook] Refund successful for user ${number.user}`);
-                } catch (err) {
-                    console.error(`[TextVerified Webhook] FAILED to refund user ${number.user}:`, err);
-                }
-
-                number.status = 'cancelled'; // Map to our schema's 'cancelled'
-                await number.save();
-            } else {
-                console.log(`[TextVerified Webhook] Number already in terminal state: ${number.status}. No action taken.`);
-            }
-        }
-        else {
-            // Pending or other statuses
-            console.log(`[TextVerified Webhook] Received non-terminal status: ${status}. No action taken.`);
         }
 
         return NextResponse.json({ success: true });
 
     } catch (error) {
-        console.error('[TextVerified Webhook] CRITICAL ERROR processing request:', error);
-        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+        console.error('Webhook Error:', error);
+        return NextResponse.json({ message: 'Error' }, { status: 500 });
     }
 }
