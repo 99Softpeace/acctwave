@@ -253,44 +253,30 @@ export class DaisySMS {
     }
 
     static async getRental(id: string): Promise<any> {
-        // DaisySMS getRentStatus usually returns a JSON object with status and messages
+        // [MODIFIED] Check Activation Status instead of Rental Status
+        // Since purchaseRental uses 'getNumber' (Standard Activation), we must use 'getStatus'
         try {
-            const responseText = await this.request({
-                action: 'getRentStatus',
-                id: id
-            });
+            const statusData = await this.getStatus(id);
 
-            // Check if response is JSON
-            try {
-                const data = JSON.parse(responseText);
-                // Expected format: { status: "success", values: { "0": { "phone": "...", "text": "...", "date": "..." } } }
-                // Or: { status: "error", message: "..." }
-
-                if (data.status === 'success' && data.values) {
-                    const messages = Object.values(data.values).map((msg: any) => ({
-                        id: msg.id || Date.now().toString(),
-                        text: msg.text,
-                        date: msg.date,
-                        sender: msg.sender
-                    }));
-
-                    return {
-                        id,
-                        status: 'active', // Assume active if we got success
-                        messages: messages,
-                        raw: data
-                    };
-                }
-            } catch (e) {
-                // Not JSON, maybe simple string status
+            // Map Activation Status to Rental Interface
+            if (statusData.status === 'completed' && statusData.code) {
+                return {
+                    id,
+                    status: 'completed',
+                    code: statusData.code,
+                    messages: [{
+                        id: Date.now().toString(),
+                        sender: 'Service',
+                        date: new Date().toISOString(),
+                        text: `Your verification code is: ${statusData.code}`
+                    }]
+                };
+            } else if (statusData.status === 'canceled') {
+                return { id, status: 'canceled', messages: [] };
+            } else {
+                // STATUS_WAIT_CODE or similar
+                return { id, status: 'active', messages: [] };
             }
-
-            return {
-                id,
-                status: 'active', // Default to active if we can't parse specific status but request succeeded
-                messages: [],
-                raw: responseText
-            };
 
         } catch (error) {
             console.error('Failed to get rental status:', error);
