@@ -81,16 +81,8 @@ export async function GET(req: Request) {
                         // Case 1: TextVerified V2 (SMS is an Object with href)
                         const isV2Link = check.sms && typeof check.sms !== 'string' && 'href' in check.sms;
 
-                        // [FIX] Stage 1 Wait Logic
-                        // If status is Pending (or undefined/defaulted) and we see a Link, 
-                        // we should WAIT for Stage 2 (Completed + String) or for the Webhook.
-                        // Attempting to follow the link in Stage 1 often yields empty results or errors.
-                        if (isV2Link && (check.status === 'Pending' || !check.status)) {
-                            console.log(`[Active Check] TV Stage 1 (Pending + Link) detected for ${id}. Waiting for Stage 2 or Webhook...`);
-                            // Do not update DB, just return (loop continues effectively for this iteration by doing nothing)
-                            // We need to ensure we don't fall through to other logic that might incorrectly expire it.
-                        }
-                        else if (isV2Link) {
+                        // [REVERT] Removed Stage 1 blocking wait. We will poll the link.
+                        if (isV2Link) {
                             try {
                                 const href = (check.sms as any).href;
                                 const relativePath = href.replace('https://www.textverified.com/api/pub/v2', '');
