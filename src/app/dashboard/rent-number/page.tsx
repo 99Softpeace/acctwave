@@ -11,6 +11,7 @@ interface Service {
     price: number;
 }
 
+// Updated Interface
 interface Rental {
     id: string;
     phone: string;
@@ -18,6 +19,10 @@ interface Rental {
     status: 'active' | 'ready' | 'canceled' | 'completed';
     code?: string;
     expiresAt: number;
+    createdAt?: string;
+    charge?: number;
+    externalId?: string;
+    messages?: any[];
 }
 
 const DURATIONS = [
@@ -25,6 +30,8 @@ const DURATIONS = [
     { label: '1 Week', value: 1, unit: 'Weeks' },
     { label: '1 Month', value: 1, unit: 'Months' }
 ];
+
+// ... (Keep existing Durations and imports)
 
 export default function RentNumberPage() {
     const [services, setServices] = useState<Service[]>([]);
@@ -42,6 +49,7 @@ export default function RentNumberPage() {
 
     useEffect(() => {
         fetchServices();
+        fetchActiveRentals();
     }, []);
 
     // Poll for status updates on active rentals
@@ -56,13 +64,19 @@ export default function RentNumberPage() {
                     const res = await fetch(`/api/rent-number/status?id=${rental.id}`);
                     const data = await res.json();
 
-                    if (data.success && data.data.status === 'completed') {
-                        toast.success(`SMS Received for ${rental.service}!`);
-                        return { ...rental, status: 'completed', code: data.data.code };
-                    }
-                    // Update messages if available
-                    if (data.success && data.data.messages) {
-                        return { ...rental, messages: data.data.messages };
+                    if (data.success) {
+                        const newStatus = data.data.status === 'completed' ? 'completed' : rental.status;
+                        // Merge new data
+                        let newRental = { ...rental };
+                        if (newStatus !== rental.status) newRental.status = newStatus;
+                        if (data.data.code) {
+                            newRental.code = data.data.code;
+                            // Only show toast if we didn't have a code before
+                            if (!rental.code) toast.success(`SMS Received for ${rental.service}!`);
+                        }
+                        if (data.data.messages) newRental.messages = data.data.messages;
+
+                        return newRental;
                     }
                 } catch (e) {
                     console.error('Polling error', e);
@@ -70,7 +84,7 @@ export default function RentNumberPage() {
                 return rental;
             }));
 
-            // Only update state if something changed to avoid re-renders
+            // Deep comparison to avoid re-renders? Or just check simplified JSON
             if (JSON.stringify(updatedRentals) !== JSON.stringify(activeRentals)) {
                 setActiveRentals(updatedRentals as Rental[]);
             }
@@ -92,6 +106,18 @@ export default function RentNumberPage() {
             toast.error('Failed to load services');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchActiveRentals = async () => {
+        try {
+            const res = await fetch('/api/rent-number/active');
+            const data = await res.json();
+            if (data.success) {
+                setActiveRentals(data.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch active rentals', error);
         }
     };
 
@@ -117,8 +143,8 @@ export default function RentNumberPage() {
             const data = await res.json();
             if (data.success) {
                 toast.success('Number rented successfully!');
-                // Ensure we map the response correctly if needed, though data.data should match Rental interface
                 setActiveRentals(prev => [data.data, ...prev]);
+                fetchActiveRentals(); // Refresh list to ensure strict syncing
             } else {
                 if (data.error === 'Insufficient balance' || data.message === 'Insufficient balance') {
                     setShowBalanceModal(true);
@@ -137,6 +163,20 @@ export default function RentNumberPage() {
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
         toast.success('Copied to clipboard');
+    };
+
+    const formatDate = (dateUnparsed: string | number) => {
+        try {
+            return new Date(dateUnparsed).toLocaleString('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true
+            });
+        } catch (e) { return 'Just now'; }
+    };
+
+    const formatTime = (ms: number) => {
+        try {
+            return new Date(ms).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+        } catch (e) { return '...'; }
     };
 
     return (
@@ -305,89 +345,98 @@ export default function RentNumberPage() {
                     <p>Rental costs are deducted from your wallet immediately. Please ensure you have sufficient funds.</p>
                 </div>
             </div>
-            {/* Active Rentals Section */}
+
+            {/* Active Rentals Section - Redesigned to Match VirtualNumber UI */}
             {activeRentals.length > 0 && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <h3 className="text-lg font-bold text-white px-2">Active Rentals</h3>
                     {activeRentals.map((rental) => (
-                        <div key={rental.id} className="glass-card p-4 rounded-xl border border-white/5 space-y-4">
-                            {/* Header */}
-                            <div className="flex items-center justify-between">
-                                <span className="font-bold text-white flex items-center gap-2">
-                                    <Smartphone className="w-4 h-4 text-primary" />
-                                    {rental.service}
-                                </span>
-                                <span className={`text-xs font-mono flex items-center gap-1 px-2 py-1 rounded-full ${rental.status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
-                                    }`}>
-                                    {rental.status === 'completed' ? <CheckCircle className="w-3 h-3" /> : <Loader2 className="w-3 h-3 animate-spin" />}
-                                    {rental.status}
-                                </span>
+                        <div key={rental.id} className="glass-card p-5 rounded-xl border border-white/5 space-y-4 relative overflow-hidden">
+                            {/* Service Name Header matched to screenshot 'Virtual Number' style */}
+                            <div className="flex items-center gap-3 mb-1">
+                                <div className="p-2 bg-blue-500/10 rounded-lg">
+                                    <Globe className="w-5 h-5 text-blue-400" />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-white text-lg">{rental.service}</h4> {/* "Snapchat" */}
+                                </div>
                             </div>
 
-                            {/* Phone Number */}
-                            <div className="flex items-center gap-2 bg-black/20 p-3 rounded-lg border border-white/5">
-                                <code className="text-xl text-blue-300 font-mono flex-1 tracking-wide">{rental.phone}</code>
-                                <button onClick={() => copyToClipboard(rental.phone)} className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white">
-                                    <Copy className="w-4 h-4" />
+                            {/* Phone Number Block */}
+                            <div className="flex items-center items-stretch gap-0">
+                                <div className="bg-white/5 border border-white/10 rounded-l-lg px-4 py-2 flex items-center">
+                                    <span className="text-xl font-mono text-gray-200 tracking-wider">
+                                        {rental.phone}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={() => copyToClipboard(rental.phone)}
+                                    className="bg-white/5 border-y border-r border-white/10 hover:bg-white/10 px-3 flex items-center justify-center rounded-r-lg transition-colors"
+                                >
+                                    <Copy className="w-4 h-4 text-gray-400" />
                                 </button>
                             </div>
 
-                            {/* Inbox / Messages */}
-                            <div className="bg-black/40 rounded-xl border border-white/5 overflow-hidden">
-                                <div className="px-4 py-2 bg-white/5 border-b border-white/5 flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                    <span className="text-xs font-medium text-gray-400">Inbox</span>
+                            {/* Metadata Row (Date only) */}
+                            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-gray-500 font-mono">
+                                <div className="flex items-center gap-1">
+                                    <span>{rental.createdAt ? formatDate(rental.createdAt) : 'Recently'}</span>
                                 </div>
+                            </div>
 
-                                <div className="p-4 space-y-3 max-h-60 overflow-y-auto custom-scrollbar">
-                                    {/* Check for messages in rental object (if updated) or fallback to code */}
-                                    {(rental as any).messages && (rental as any).messages.length > 0 ? (
-                                        (rental as any).messages.map((msg: any, idx: number) => (
-                                            <div key={idx} className="bg-white/5 p-3 rounded-lg border border-white/5 animate-in slide-in-from-right-2">
-                                                <div className="flex justify-between items-start mb-1">
-                                                    <span className="text-xs font-bold text-primary">{msg.sender || 'Service'}</span>
-                                                    <span className="text-[10px] text-gray-500">{msg.date}</span>
-                                                </div>
-                                                <p className="text-sm text-gray-300 break-words">{msg.text}</p>
-                                                {/* Extract code if possible */}
-                                                {msg.text.match(/\b\d{4,8}\b/) && (
-                                                    <div className="mt-2 flex items-center gap-2">
-                                                        <code className="bg-black/30 px-2 py-1 rounded text-green-400 font-mono text-sm">
-                                                            {msg.text.match(/\b\d{4,8}\b/)[0]}
-                                                        </code>
-                                                        <button
-                                                            onClick={() => copyToClipboard(msg.text.match(/\b\d{4,8}\b/)[0])}
-                                                            className="text-gray-500 hover:text-white transition-colors"
-                                                        >
-                                                            <Copy className="w-3 h-3" />
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))
-                                    ) : rental.code ? (
-                                        <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-lg animate-in zoom-in duration-300">
-                                            <p className="text-xs text-green-400 mb-1 font-bold uppercase tracking-wider">SMS Code Received</p>
-                                            <div className="flex items-center gap-2">
-                                                <code className="text-3xl font-bold text-white tracking-[0.2em]">{rental.code}</code>
-                                                <button onClick={() => copyToClipboard(rental.code!)} className="ml-auto p-2 hover:bg-green-500/20 rounded-lg transition-colors text-green-400">
-                                                    <Copy className="w-5 h-5" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center py-8 text-gray-500 gap-2">
-                                            <div className="relative">
-                                                <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
-                                                <div className="relative bg-black/50 p-2 rounded-full border border-white/10">
-                                                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                                                </div>
-                                            </div>
-                                            <p className="text-xs">Waiting for messages...</p>
+                            {/* Divider */}
+                            <div className="h-px bg-white/5 my-2" />
+
+                            {/* Status Footer Row */}
+                            <div className="flex items-center justify-between">
+                                <div className="flex gap-6 text-sm">
+                                    <div>
+                                        <p className="text-gray-500 text-xs uppercase tracking-wider mb-0.5">Expires</p>
+                                        <p className="font-bold text-white font-mono">{rental.expiresAt ? formatTime(rental.expiresAt) : '--:--'}</p>
+                                    </div>
+                                    {rental.charge !== undefined && (
+                                        <div>
+                                            <p className="text-gray-500 text-xs uppercase tracking-wider mb-0.5">Charge</p>
+                                            <p className="font-bold text-white font-mono">₦{rental.charge.toLocaleString()}</p>
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Status Badge */}
+                                <div className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${rental.status === 'completed'
+                                    ? 'bg-green-500/10 border-green-500/20 text-green-400'
+                                    : 'bg-green-500/10 border-green-500/20 text-green-400' // 'Active' is also green in screenshot
+                                    }`}>
+                                    <div className={`w-1.5 h-1.5 rounded-full ${rental.status === 'completed' ? 'bg-green-400' : 'bg-green-400 animate-pulse'}`} />
+                                    {rental.status === 'completed' ? 'SMS Received' : 'Active'}
+                                </div>
                             </div>
+
+                            {/* Inbox / Messages Section (Collapsible or visible) */}
+                            {((rental.messages && rental.messages.length > 0) || rental.code) && (
+                                <div className="mt-4 pt-4 border-t border-white/5 animate-in slide-in-from-top-2">
+                                    {/* ... (Existing inbox logic but styled cleaner) ... */}
+                                    {rental.code ? (
+                                        <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-lg flex items-center justify-between">
+                                            <div>
+                                                <p className="text-xs text-green-400 font-bold uppercase">Verification Code</p>
+                                                <code className="text-2xl font-bold text-white tracking-widest">{rental.code}</code>
+                                            </div>
+                                            <button onClick={() => copyToClipboard(rental.code!)} className="p-2 hover:bg-green-500/20 rounded-lg text-green-400">
+                                                <Copy className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {rental.messages?.map((msg: any, i: number) => (
+                                                <div key={i} className="bg-white/5 p-2 rounded text-sm text-gray-300">
+                                                    {msg.text}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

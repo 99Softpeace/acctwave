@@ -90,7 +90,9 @@ export default function OrdersPage() {
                                         <Package className="w-6 h-6 text-primary" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-white mb-1">{order.service_name}</h3>
+                                        <h3 className="text-lg font-bold text-white mb-1">
+                                            {order.service_name.replace(' (DaisySMS)', '')}
+                                        </h3>
 
                                         {/* Render based on Order Type */}
                                         {order.type === 'rental' ? (

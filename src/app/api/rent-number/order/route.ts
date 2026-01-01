@@ -60,7 +60,7 @@ export async function POST(req: Request) {
             user: user._id,
             type: 'rental',
             service_id: service,
-            service_name: `Rental: ${selectedService.name} (DaisySMS)`,
+            service_name: `Rental: ${selectedService.name}`,
             charge: price,
             external_order_id: `DS:${rental.id}`,
             status: 'Active',
