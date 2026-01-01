@@ -43,13 +43,15 @@ export async function POST(req: Request) {
         }
 
         // 3. Update the number
-        // Only update if we have a code or status is completed
-        if (realCode || status === 'Completed') {
-            if (realCode) number.smsCode = realCode;
+        // [SAFER LOGIC] Only complete IF we have the code
+        if (realCode) {
+            number.smsCode = realCode;
             number.status = 'completed';
             await number.save();
             console.log(`✅ SUCCESS: DB Updated with code ${realCode}`);
-        } else if (status === 'Cancelled' || status === 'Timed Out' || status === 'Refunded') {
+        }
+        // Or if it's genuinely cancelled/expired
+        else if (status === 'Cancelled' || status === 'Timed Out' || status === 'Refunded') {
             // Handle Refund/Cancel
             if (number.status !== 'cancelled' && number.status !== 'refunded') {
                 const User = require('@/models/User').default || require('@/models/User');
@@ -58,6 +60,9 @@ export async function POST(req: Request) {
                 await number.save();
                 console.log(`🚫 Number marked as ${status} and refunded.`);
             }
+        }
+        else if (status === 'Completed' && !realCode) {
+            console.warn(`⚠️ WARNING: Received 'Completed' status but NO code found. Parsing might be failing. Keys: ${Object.keys(body.Data || body).join(', ')}`);
         }
 
         return NextResponse.json({ success: true });
