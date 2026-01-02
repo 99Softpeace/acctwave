@@ -36,12 +36,12 @@ export async function GET(request: Request) {
         // Fetch Services using SMSPool for ALL countries (including US)
         const spServices = await SMSPool.getServices(effectiveCountryId);
 
-        const popularServices = ['WhatsApp', 'Telegram', 'Facebook', 'Instagram', 'Twitter', 'Google', 'TikTok', 'Snapchat', 'Uber', 'Netflix', 'Discord', 'Amazon', 'PayPal', 'LinkedIn', 'Microsoft', 'Yahoo', 'Apple', 'Tinder', 'Viber', 'WeChat'];
+        const popularServices = ['WhatsApp', 'Telegram', 'Facebook', 'Instagram', 'Twitter', 'Google', 'TikTok', 'Snapchat', 'Uber', 'Netflix', 'Discord', 'Amazon', 'PayPal', 'LinkedIn', 'Microsoft', 'Yahoo', 'Apple', 'Tinder', 'Viber', 'WeChat', 'Signal'];
 
         const prioritizedServices = spServices.filter(s => popularServices.some(p => s.name.toLowerCase().includes(p.toLowerCase())));
         const otherServices = spServices.filter(s => !popularServices.some(p => s.name.toLowerCase().includes(p.toLowerCase())));
 
-        const servicesToFetch = [...prioritizedServices, ...otherServices].slice(0, 40);
+        const servicesToFetch = [...prioritizedServices, ...otherServices].slice(0, 200);
 
         console.log(`Fetching prices for ${servicesToFetch.length} services in country ${effectiveCountryId} (Req: ${countryId})...`);
 
@@ -78,9 +78,11 @@ export async function GET(request: Request) {
                         } else if (s.name.toLowerCase().includes('facebook')) {
                             finalPrice = 2980;
                         } else if (s.name.toLowerCase().includes('discord')) {
-                            finalPrice = 2980;
+                            finalPrice = 1680;
                         } else if (s.name.toLowerCase().includes('whatsapp')) {
                             finalPrice = 3927;
+                        } else if (s.name.toLowerCase().includes('signal')) {
+                            finalPrice = 1680;
                         }
                     }
 
@@ -114,9 +116,11 @@ export async function GET(request: Request) {
                         } else if (s.name.toLowerCase().includes('facebook')) {
                             fallbackPrice = 2980;
                         } else if (s.name.toLowerCase().includes('discord')) {
-                            fallbackPrice = 2980;
+                            fallbackPrice = 1680;
                         } else if (s.name.toLowerCase().includes('whatsapp')) {
                             fallbackPrice = 3927;
+                        } else if (s.name.toLowerCase().includes('signal')) {
+                            fallbackPrice = 1680;
                         }
                     }
 
