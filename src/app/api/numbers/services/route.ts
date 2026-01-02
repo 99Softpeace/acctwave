@@ -61,6 +61,8 @@ export async function GET(request: Request) {
                             finalPrice = 1600;
                         } else if (s.name.toLowerCase().includes('telegram')) {
                             finalPrice = 3800;
+                        } else if (s.name.toLowerCase().includes('twitter') || s.name.toLowerCase().includes('x')) {
+                            finalPrice = 1380;
                         }
                     }
 
@@ -77,6 +79,8 @@ export async function GET(request: Request) {
                             fallbackPrice = 1600;
                         } else if (s.name.toLowerCase().includes('telegram')) {
                             fallbackPrice = 3800;
+                        } else if (s.name.toLowerCase().includes('twitter') || s.name.toLowerCase().includes('x')) {
+                            fallbackPrice = 1380;
                         }
                     }
 
