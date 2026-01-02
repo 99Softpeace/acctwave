@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getProductInfo } from '@/lib/modded-apps';
+import { fetchProduct } from '@/lib/bulkacc-service';
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -10,8 +10,11 @@ export async function GET(req: Request) {
     }
 
     try {
-        const data = await getProductInfo(productCode);
-        return NextResponse.json(data);
+        const data = await fetchProduct(productCode);
+        if (!data) {
+            return NextResponse.json({ message: 'Product not found' }, { status: 404 });
+        }
+        return NextResponse.json({ statusCode: 200, data });
     } catch (error: any) {
         return NextResponse.json({ message: error.message }, { status: 500 });
     }

@@ -8,72 +8,77 @@ if (!MODDED_APPS_API_URL) {
 // Centralized Mock Data
 const MOCK_PRODUCTS: Record<string, any> = {
     // --- INSTAGRAM ---
-    '300004': { name: 'Instagram Account (Random)', price: 1600, inStock: 150, min: 1, code: '300004' },
-    '300005': { name: 'Instagram Aged (2018-2022)', price: 8000, inStock: 45, min: 1, code: '300005' },
-    '300006': { name: 'Instagram PVA (Phone Verified)', price: 3840, inStock: 80, min: 1, code: '300006' },
-    '300007': { name: 'Instagram with 100+ Followers', price: 16000, inStock: 20, min: 1, code: '300007' },
-    '300008': { name: 'Instagram Business Account', price: 11200, inStock: 30, min: 1, code: '300008' },
-    '300009': { name: 'Instagram Aged + Posts', price: 12800, inStock: 15, min: 1, code: '300009' },
+    '300004': { name: 'Instagram (Aged 2-3 Months)', price: 1410, inStock: 35000, min: 1, code: '200889' },
+    '300005': { name: 'Instagram (Aged 1-2 Years)', price: 10250, inStock: 17000, min: 1, code: '200899' },
+    '300006': { name: 'Instagram (Aged 1-2 Months)', price: 1130, inStock: 33000, min: 1, code: '200885' },
+    // Placeholders / OOS
+    '300007': { name: 'Instagram (100+ Followers)', price: 16000, inStock: 0, min: 1, code: '300007' },
+    '300008': { name: 'Instagram Business', price: 11200, inStock: 0, min: 1, code: '300008' },
+    '300009': { name: 'Instagram Aged + Posts', price: 12800, inStock: 0, min: 1, code: '300009' },
 
     // --- FACEBOOK ---
-    '100001': { name: 'Facebook Account (New)', price: 960, inStock: 200, min: 1, code: '100001' },
-    '100002': { name: 'Facebook Marketplace Enabled', price: 16000, inStock: 12, min: 1, code: '100002' },
-    '100003': { name: 'Facebook Business Manager (BM1)', price: 48000, inStock: 5, min: 1, code: '100003' },
-    '100004': { name: 'Facebook Business Manager (BM5)', price: 144000, inStock: 2, min: 1, code: '100004' },
-    '100005': { name: 'Facebook Aged (2010-2019)', price: 25600, inStock: 25, min: 1, code: '100005' },
-    '100006': { name: 'Facebook with Friends (100+)', price: 19200, inStock: 10, min: 1, code: '100006' },
-    '100007': { name: 'Facebook Ads Reinstated', price: 80000, inStock: 3, min: 1, code: '100007' },
+    '100001': { name: 'Facebook (VN 2FA)', price: 975, inStock: 50, min: 1, code: '101493' },
+    '100005': { name: 'Facebook (PVA 4-5 Months)', price: 6120, inStock: 800, min: 1, code: '202103' },
+    // Placeholders / OOS
+    '100002': { name: 'Facebook Marketplace', price: 16000, inStock: 0, min: 1, code: '100002' },
+    '100003': { name: 'Facebook BM1', price: 48000, inStock: 0, min: 1, code: '100003' },
+    '100004': { name: 'Facebook BM5', price: 144000, inStock: 0, min: 1, code: '100004' },
+    '100006': { name: 'Facebook Friends 100+', price: 19200, inStock: 0, min: 1, code: '100006' },
+    '100007': { name: 'Facebook Ads Reinstated', price: 80000, inStock: 0, min: 1, code: '100007' },
 
     // --- TWITTER / X ---
-    '200001': { name: 'X (Twitter) Account (New)', price: 1280, inStock: 100, min: 1, code: '200001' },
-    '200002': { name: 'X (Twitter) Aged (2015-2020)', price: 9600, inStock: 30, min: 1, code: '200002' },
-    '200003': { name: 'X (Twitter) NFT Profile', price: 6400, inStock: 50, min: 1, code: '200003' },
-    '200004': { name: 'X (Twitter) Blue Tick Eligible', price: 32000, inStock: 5, min: 1, code: '200004' },
+    '200001': { name: 'X (Twitter 10-11 Months)', price: 1860, inStock: 7000, min: 1, code: '200156' },
+    '200002': { name: 'X (Twitter 1-2 Years)', price: 2910, inStock: 190000, min: 1, code: '200881' },
+    '200003': { name: 'X (Twitter Warmed Up)', price: 9090, inStock: 20000, min: 1, code: '200707' },
+    '200004': { name: 'X (Twitter Blue Likely)', price: 32000, inStock: 0, min: 1, code: '200004' },
 
     // --- TIKTOK ---
-    '700001': { name: 'TikTok Account (New)', price: 1600, inStock: 300, min: 1, code: '700001' },
-    '700002': { name: 'TikTok Ads Account', price: 38400, inStock: 8, min: 1, code: '700002' },
-    '700003': { name: 'TikTok 1k+ Followers (Live Enabled)', price: 48000, inStock: 10, min: 1, code: '700003' },
-    '700004': { name: 'TikTok US Region', price: 6400, inStock: 50, min: 1, code: '700004' },
+    '700001': { name: 'TikTok (1-2 Years Aged)', price: 3480, inStock: 129000, min: 1, code: '200345' },
+    '700002': { name: 'TikTok Ads (VN Manager)', price: 3370, inStock: 100000, min: 1, code: '201112' },
+    '700003': { name: 'TikTok 1k+ (Live)', price: 48000, inStock: 0, min: 1, code: '700003' },
+    '700004': { name: 'TikTok US Region', price: 6400, inStock: 0, min: 1, code: '700004' },
 
     // --- SNAPCHAT ---
-    '800001': { name: 'Snapchat Account (New)', price: 1920, inStock: 150, min: 1, code: '800001' },
-    '800002': { name: 'Snapchat High Score (10k+)', price: 14400, inStock: 20, min: 1, code: '800002' },
-    '800003': { name: 'Snapchat Aged', price: 8000, inStock: 40, min: 1, code: '800003' },
+    '800001': { name: 'Snapchat (2-3 Months)', price: 3130, inStock: 7600, min: 1, code: '201175' },
+    '800002': { name: 'Snapchat High Score', price: 14400, inStock: 0, min: 1, code: '800002' },
+    '800003': { name: 'Snapchat Aged (1-2 Years)', price: 36380, inStock: 19000, min: 1, code: '201231' },
 
     // --- LINKEDIN ---
-    '900001': { name: 'LinkedIn Account (New)', price: 3200, inStock: 50, min: 1, code: '900001' },
-    '900002': { name: 'LinkedIn Aged + 500 Connections', price: 48000, inStock: 5, min: 1, code: '900002' },
-    '900003': { name: 'LinkedIn Business Page', price: 16000, inStock: 10, min: 1, code: '900003' },
+    '900001': { name: 'LinkedIn (9-10 Months)', price: 26080, inStock: 900, min: 1, code: '201730' },
+    '900002': { name: 'LinkedIn Connections', price: 48000, inStock: 0, min: 1, code: '900002' },
+    '900003': { name: 'LinkedIn Business', price: 16000, inStock: 0, min: 1, code: '900003' },
 
     // --- YOUTUBE & GOOGLE ---
-    '150001': { name: 'YouTube Channel (New)', price: 3200, inStock: 100, min: 1, code: '150001' },
-    '150002': { name: 'YouTube Channel (Aged 2010-2015)', price: 32000, inStock: 15, min: 1, code: '150002' },
-    '150003': { name: 'YouTube Channel (1k Subs + Monetization)', price: 480000, inStock: 2, min: 1, code: '150003' },
-    '150004': { name: 'Google Voice Number', price: 9600, inStock: 50, min: 1, code: '150004' },
+    '150001': { name: 'YouTube Channel (New)', price: 3200, inStock: 0, min: 1, code: '150001' },
+    '150002': { name: 'YouTube Channel (Aged)', price: 32000, inStock: 0, min: 1, code: '150002' },
+    '150003': { name: 'YouTube Monetized', price: 480000, inStock: 0, min: 1, code: '150003' },
+    '150004': { name: 'Google Voice Number', price: 9600, inStock: 0, min: 1, code: '150004' },
 
     // --- REDDIT ---
-    '160001': { name: 'Reddit Account (New)', price: 1600, inStock: 200, min: 1, code: '160001' },
-    '160002': { name: 'Reddit Account (Aged 1 Year+)', price: 16000, inStock: 30, min: 1, code: '160002' },
-    '160003': { name: 'Reddit Account (1k+ Karma)', price: 48000, inStock: 10, min: 1, code: '160003' },
+    '160001': { name: 'Reddit (2-3 Years)', price: 6370, inStock: 235, min: 1, code: '200281' },
+    '160002': { name: 'Reddit (Aged 1-2 Years)', price: 21830, inStock: 300, min: 1, code: '200736' },
+    '160003': { name: 'Reddit (High Karma)', price: 48000, inStock: 0, min: 1, code: '160003' },
 
     // --- MESSAGING ---
-    '110001': { name: 'Telegram Account (TData)', price: 4800, inStock: 100, min: 1, code: '110001' },
-    '110002': { name: 'Telegram Session + Json', price: 3840, inStock: 120, min: 1, code: '110002' },
-    '110003': { name: 'Telegram Aged', price: 9600, inStock: 40, min: 1, code: '110003' },
-    '120001': { name: 'Discord Token (Aged)', price: 2560, inStock: 200, min: 1, code: '120001' },
+    '110001': { name: 'Telegram Account (TData)', price: 4800, inStock: 0, min: 1, code: '110001' },
+    '110002': { name: 'Telegram Session', price: 3840, inStock: 0, min: 1, code: '110002' },
+    '110003': { name: 'Telegram Aged', price: 9600, inStock: 0, min: 1, code: '110003' },
+
+    // Discord
+    '200199': { name: 'Aged Discord (2FA, 5-6 Months)', price: 2500, inStock: 615, min: 1, code: '200199' },
     '120002': { name: 'Discord Token (Verified)', price: 4800, inStock: 80, min: 1, code: '120002' },
-    '120003': { name: 'Discord Nitro (3 Months)', price: 16000, inStock: 20, min: 1, code: '120003' },
-    '130001': { name: 'WhatsApp Hash Channel', price: 6400, inStock: 50, min: 5, code: '130001' },
-    '130002': { name: 'WhatsApp Business Account', price: 25600, inStock: 10, min: 1, code: '130002' },
+    '120003': { name: 'Discord Nitro', price: 16000, inStock: 0, min: 1, code: '120003' },
+
+    '130001': { name: 'WhatsApp Hash Channel', price: 6400, inStock: 0, min: 5, code: '130001' },
+    '130002': { name: 'WhatsApp Business', price: 25600, inStock: 0, min: 1, code: '130002' },
 
     // --- EMAIL ---
-    '400001': { name: 'Gmail Account (New)', price: 640, inStock: 500, min: 5, code: '400001' },
-    '400002': { name: 'Gmail Aged (2015-2019)', price: 4800, inStock: 60, min: 1, code: '400002' },
-    '400003': { name: 'Outlook Account', price: 320, inStock: 1000, min: 10, code: '400003' },
-    '400004': { name: 'Yahoo Mail (Aged)', price: 1600, inStock: 100, min: 1, code: '400004' },
-    '400005': { name: 'ProtonMail Account', price: 3200, inStock: 50, min: 1, code: '400005' },
-    '400006': { name: 'Edu Email (Student)', price: 16000, inStock: 15, min: 1, code: '400006' },
+    '400001': { name: 'Gmail (New)', price: 1300, inStock: 3000, min: 1, code: '200520' }, // Mapped to Gmail 2FA
+    '400002': { name: 'Gmail Aged (1-2 Years)', price: 10960, inStock: 2700, min: 1, code: '200226' },
+    '400003': { name: 'Outlook Account', price: 320, inStock: 0, min: 10, code: '400003' },
+    '400004': { name: 'Yahoo Mail', price: 1600, inStock: 0, min: 1, code: '400004' },
+    '400005': { name: 'ProtonMail', price: 3200, inStock: 0, min: 1, code: '400005' },
+    '400006': { name: 'Edu Email', price: 16000, inStock: 0, min: 1, code: '400006' },
 
     // --- STREAMING ---
     '500001': { name: 'Netflix Premium (1 Month)', price: 11200, inStock: 20, min: 1, code: '500001' },
