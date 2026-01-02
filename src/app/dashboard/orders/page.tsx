@@ -30,6 +30,7 @@ export default function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedEsim, setSelectedEsim] = useState<Order | null>(null);
+    const [selectedLog, setSelectedLog] = useState<Order | null>(null);
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -132,21 +133,35 @@ export default function OrdersPage() {
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
-                                                <a
-                                                    href={order.link}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="hover:text-primary flex items-center gap-1 truncate max-w-[200px] md:max-w-[300px]"
-                                                >
-                                                    {order.link}
-                                                    <ExternalLink className="w-3 h-3" />
-                                                </a>
-                                                <button
-                                                    onClick={() => copyToClipboard(order.link || '')}
-                                                    className="p-1 hover:bg-white/10 rounded"
-                                                >
-                                                    <Copy className="w-3 h-3" />
-                                                </button>
+                                                {order.code ? (
+                                                    <button
+                                                        onClick={() => setSelectedLog(order)}
+                                                        className="text-xs flex items-center gap-1 bg-green-500/10 text-green-400 px-3 py-1.5 rounded hover:bg-green-500/20 transition-colors font-medium border border-green-500/20"
+                                                    >
+                                                        <CheckCircle className="w-3 h-3" />
+                                                        View Login Details
+                                                    </button>
+                                                ) : (
+                                                    <div className="flex items-center gap-2">
+                                                        <a
+                                                            href={order.link}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="hover:text-primary flex items-center gap-1 truncate max-w-[200px] md:max-w-[300px]"
+                                                        >
+                                                            {order.link || 'Processing...'}
+                                                            {order.link && <ExternalLink className="w-3 h-3" />}
+                                                        </a>
+                                                        {order.link && (
+                                                            <button
+                                                                onClick={() => copyToClipboard(order.link || '')}
+                                                                className="p-1 hover:bg-white/10 rounded"
+                                                            >
+                                                                <Copy className="w-3 h-3" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 
@@ -243,6 +258,43 @@ export default function OrdersPage() {
                             <p className="text-sm text-gray-400">
                                 Scan the QR code or manually enter the details in your device settings to activate your eSIM.
                             </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Log Details Modal */}
+            {selectedLog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-white">Account Details</h3>
+                            <button
+                                onClick={() => setSelectedLog(null)}
+                                className="text-gray-400 hover:text-white transition-colors"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-xl flex gap-3 text-sm text-yellow-200">
+                                <p>Please save these credentials immediately. They may not be retrievable later.</p>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Credentials / Logs</label>
+                                <div className="bg-black/30 border border-white/10 rounded-lg p-4 font-mono text-sm text-white break-all whitespace-pre-wrap max-h-[300px] overflow-y-auto">
+                                    {selectedLog.code || 'No details available'}
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => copyToClipboard(selectedLog.code || '')}
+                                className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Copy className="w-4 h-4" />
+                                Copy Details
+                            </button>
                         </div>
                     </div>
                 </div>

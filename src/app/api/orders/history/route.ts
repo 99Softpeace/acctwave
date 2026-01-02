@@ -41,7 +41,7 @@ export async function GET(req: Request) {
         const normalizedBoosts = boostOrders.map((o: any) => ({
             _id: o._id,
             type: 'boost',
-            service_name: o.service_name,
+            service_name: o.service_name === 'Modded App / Account' ? 'Social Media Logs' : o.service_name,
             link: o.link,
             quantity: o.quantity,
             charge: o.charge,
@@ -49,7 +49,8 @@ export async function GET(req: Request) {
             start_count: o.start_count,
             remains: o.remains,
             createdAt: o.createdAt,
-            external_order_id: o.external_order_id
+            external_order_id: o.external_order_id,
+            code: o.code // Include credentials/details for logs
         }));
 
         const normalizedRentals = rentalOrders.map((r: any) => ({
