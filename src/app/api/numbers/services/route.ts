@@ -53,16 +53,37 @@ export async function GET(request: Request) {
                     const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000));
                     const priceUSD = await Promise.race([pricePromise, timeoutPromise]) as number;
 
+                    let finalPrice = calculatePrice(priceUSD, 'SMSPOOL');
+
+                    // Custom Overrides for USA (ID 1)
+                    if (effectiveCountryId === '1') {
+                        if (s.name.toLowerCase().includes('snapchat')) {
+                            finalPrice = 1600;
+                        } else if (s.name.toLowerCase().includes('telegram')) {
+                            finalPrice = 3800;
+                        }
+                    }
+
                     return {
                         id: s.id,
                         name: s.name,
-                        price: calculatePrice(priceUSD, 'SMSPOOL')
+                        price: finalPrice
                     };
                 } catch (error) {
+                    let fallbackPrice = calculatePrice(0.5, 'SMSPOOL');
+                    // Custom Overrides for USA (ID 1)
+                    if (effectiveCountryId === '1') {
+                        if (s.name.toLowerCase().includes('snapchat')) {
+                            fallbackPrice = 1600;
+                        } else if (s.name.toLowerCase().includes('telegram')) {
+                            fallbackPrice = 3800;
+                        }
+                    }
+
                     return {
                         id: s.id,
                         name: s.name,
-                        price: calculatePrice(0.5, 'SMSPOOL') // Fallback
+                        price: fallbackPrice
                     };
                 }
             })
