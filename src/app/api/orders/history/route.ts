@@ -3,8 +3,10 @@ import { getServerSession } from 'next-auth';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import VirtualNumber from '@/models/VirtualNumber';
+import Transaction from '@/models/Transaction';
 import { authOptions } from '@/lib/auth';
 import { getOrderStatus } from '@/lib/smm';
+import { SMSPool } from '@/lib/smspool';
 
 export async function GET(req: Request) {
     try {
@@ -23,6 +25,17 @@ export async function GET(req: Request) {
         // Fetch Virtual Number rentals
         const rentalOrders = await VirtualNumber.find({ user: (session.user as any).id })
             .lean();
+
+        // Fetch eSIM Transactions (including legacy ones missing category)
+        const esimTransactions = await Transaction.find({
+            user: (session.user as any).id,
+            $or: [
+                { category: 'esim_purchase' },
+                { description: { $regex: 'eSIM Purchase', $options: 'i' } }
+            ]
+        }).sort({ createdAt: -1 }).lean();
+
+        console.log(`History API: User ${(session.user as any).id} - Found ${esimTransactions.length} eSIMs`);
 
         // Normalize and Combine
         const normalizedBoosts = boostOrders.map((o: any) => ({
@@ -52,7 +65,27 @@ export async function GET(req: Request) {
             external_order_id: r.externalId
         }));
 
-        const allOrders = [...normalizedBoosts, ...normalizedRentals].sort((a: any, b: any) =>
+        // Normalize and Combine
+        // Self-heal eSIM orders: Check for missing codes and fetch them (Robust version)
+        const normalizedEsims = esimTransactions.map((t: any) => {
+            const od = t.metadata?.orderData || {};
+            return {
+                _id: t._id,
+                type: 'esim',
+                service_name: t.description || 'eSIM Purchase',
+                charge: t.amount,
+                status: t.status === 'successful' ? 'Completed' : t.status,
+                createdAt: t.createdAt,
+                // Mapped fields
+                qr_code: od.qr_code || od.qr || od.image || od.qrCode || od.qr_code_url || od.qrUrl || od.iccid,
+                activation_code: od.activation_code || od.code || od.activation || od.lpa || od.smdp_address || od.smdpAddress,
+                smdp_address: od.smdp_address || od.smdp || od.server || od.smdpAddress,
+                plan_id: t.metadata?.planId,
+                external_order_id: t.reference
+            };
+        });
+
+        const allOrders = [...normalizedBoosts, ...normalizedRentals, ...normalizedEsims].sort((a: any, b: any) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
 

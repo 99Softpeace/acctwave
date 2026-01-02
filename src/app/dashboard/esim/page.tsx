@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { Smartphone, Wifi, CreditCard, Zap, Loader2, CheckCircle, AlertCircle, Globe, QrCode } from 'lucide-react';
+import { Smartphone, Wifi, CreditCard, Zap, Loader2, CheckCircle, AlertCircle, Globe, QrCode, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface ESIMPlan {
@@ -35,9 +35,28 @@ export default function ESIMPage() {
 
     const EXCHANGE_RATE = 1600; // Display rate
 
+    const [recentOrders, setRecentOrders] = useState<any[]>([]);
+    const [loadingOrders, setLoadingOrders] = useState(true);
+
     useEffect(() => {
         fetchCountries();
+        fetchRecentOrders();
     }, []);
+
+    const fetchRecentOrders = async () => {
+        try {
+            const res = await fetch('/api/orders/history');
+            const data = await res.json();
+            if (data.success) {
+                const esims = data.data.filter((o: any) => o.type === 'esim').slice(0, 3);
+                setRecentOrders(esims);
+            }
+        } catch (error) {
+            console.error('Failed to load history', error);
+        } finally {
+            setLoadingOrders(false);
+        }
+    };
 
     useEffect(() => {
         if (selectedCountry) {
@@ -135,7 +154,7 @@ export default function ESIMPage() {
                         <div>
                             <label className="text-xs font-medium text-gray-500 uppercase">Activation Code</label>
                             <div className="flex items-center gap-2 mt-1">
-                                <code className="bg-gray-100 px-3 py-2 rounded-lg text-lg font-mono block w-full">
+                                <code className="bg-gray-100 px-3 py-2 rounded-lg text-lg font-mono block w-full text-black">
                                     {purchasedOrder.activation_code || 'N/A'}
                                 </code>
                             </div>
@@ -288,6 +307,46 @@ export default function ESIMPage() {
                     )}
                 </div>
             )}
+            {/* Recent Purchases Section */}
+            <div className="pt-8 border-t border-white/5">
+                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-gray-400" />
+                    Recent Purchases
+                </h2>
+
+                {loadingOrders ? (
+                    <div className="text-center py-8 text-gray-500">Loading history...</div>
+                ) : recentOrders.length > 0 ? (
+                    <div className="space-y-4">
+                        {recentOrders.map((order: any) => (
+                            <div key={order._id} className="glass-card p-4 rounded-xl border border-white/10 flex items-center justify-between">
+                                <div>
+                                    <div className="font-bold text-white">{order.service_name}</div>
+                                    <div className="text-xs text-gray-500">
+                                        Purchased on {new Date(order.createdAt).toLocaleDateString()}
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setPurchasedOrder({
+                                        qr_code: order.qr_code,
+                                        activation_code: order.activation_code,
+                                        // map other fields if necessary for the success view to reuse it, 
+                                        // or just use a dedicated modal.
+                                        // Let's reuse the existing "success view" logic by setting purchasedOrder
+                                        // but we need to match the structure expected by the success view:
+                                        // { qr_code, activation_code }
+                                    })}
+                                    className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-sm font-medium rounded-lg transition-colors border border-white/10"
+                                >
+                                    View Details
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-gray-500 text-sm">No recent eSIM purchases found.</div>
+                )}
+            </div>
         </div>
     );
 }

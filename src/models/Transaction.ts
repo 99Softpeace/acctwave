@@ -29,6 +29,9 @@ const TransactionSchema = new mongoose.Schema({
         enum: ['deposit', 'withdrawal', 'order', 'bonus', 'commission'],
         default: 'deposit',
     },
+    category: {
+        type: String,
+    },
     description: {
         type: String,
     },
@@ -45,4 +48,10 @@ const TransactionSchema = new mongoose.Schema({
     },
 });
 
-export default mongoose.models.Transaction || mongoose.model('Transaction', TransactionSchema);
+// Force recompilation in dev to apply schema changes
+if (process.env.NODE_ENV === 'development' && mongoose.models.Transaction) {
+    delete mongoose.models.Transaction;
+}
+
+const Transaction = mongoose.models.Transaction || mongoose.model('Transaction', TransactionSchema);
+export default Transaction;

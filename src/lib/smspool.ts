@@ -41,7 +41,13 @@ export class SMSPool {
 
         console.log(`SMSPool Request: ${url.toString().replace(API_KEY, '***')}`);
 
-        const response = await fetch(url.toString(), { cache: 'no-store' });
+        const response = await fetch(url.toString(), {
+            cache: 'no-store',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json'
+            }
+        });
 
         if (!response.ok) {
             throw new Error(`SMSPool API error: ${response.status}`);
@@ -190,6 +196,48 @@ export class SMSPool {
             plan: planId.toString()
         });
         return data;
+    }
+
+    static async checkESIMOrder(orderId: string): Promise<any> {
+        try {
+            // Updated Endpoint: /esim/profile (Corrected per documentation)
+            // Requires 'transactionId' in body params
+            const formData = new URLSearchParams();
+            formData.append('key', process.env.SMSPOOL_API_KEY!);
+            formData.append('transactionId', orderId);
+
+            const response = await fetch(`${BASE_URL}/esim/profile`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    // Content-Type is auto-set to x-www-form-urlencoded by fetch for URLSearchParams
+                }
+            });
+
+            const data = await response.json();
+
+            // Map known success fields: 'ac', 'smdp', 'activationCode'
+            if (data.ac || data.activationCode) {
+                // Generate QR Code URL from the Activation String (ac)
+                // Using a reliable public QR code API to render the image
+                // Use data.ac if available (it corresponds to the QR string), or construct it from activationCode + smdp_address if needed.
+                // Usually 'ac' is the LPA string.
+                const qrValue = data.ac || `LPA:1$${data.smdp}$${data.activationCode}`;
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrValue)}`;
+
+                return {
+                    qr_code: qrUrl,
+                    activation_code: data.activationCode || data.code,
+                    smdp_address: data.smdp,
+                    ...data
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error('Check eSIM Order Error:', error);
+            return null;
+        }
     }
 }
 

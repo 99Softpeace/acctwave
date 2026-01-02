@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Package, Clock, CheckCircle, XCircle, Loader2, ExternalLink, Copy } from 'lucide-react';
+import { Package, Clock, CheckCircle, XCircle, Loader2, ExternalLink, Copy, Smartphone, QrCode, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
 
 interface Order {
     _id: string;
-    type?: 'boost' | 'rental';
+    type?: 'boost' | 'rental' | 'esim';
     service_name: string;
     link?: string;
     quantity?: number;
@@ -20,11 +20,16 @@ interface Order {
     phone?: string;
     code?: string;
     expiresAt?: string;
+    // eSIM specific
+    qr_code?: string;
+    activation_code?: string;
+    smdp_address?: string;
 }
 
 export default function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedEsim, setSelectedEsim] = useState<Order | null>(null);
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -59,10 +64,10 @@ export default function OrdersPage() {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 relative">
             <div>
                 <h1 className="text-3xl font-bold text-white mb-2">My Orders</h1>
-                <p className="text-gray-400">Track your social media boost orders</p>
+                <p className="text-gray-400">Track your purchases and services</p>
             </div>
 
             {orders.length === 0 ? (
@@ -86,8 +91,13 @@ export default function OrdersPage() {
                         >
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div className="flex items-start gap-4">
-                                    <div className="p-3 bg-primary/10 rounded-xl mt-1">
-                                        <Package className="w-6 h-6 text-primary" />
+                                    <div className={`p-3 rounded-xl mt-1 ${order.type === 'esim' ? 'bg-purple-500/10' : 'bg-primary/10'
+                                        }`}>
+                                        {order.type === 'esim' ? (
+                                            <Smartphone className="w-6 h-6 text-purple-500" />
+                                        ) : (
+                                            <Package className="w-6 h-6 text-primary" />
+                                        )}
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-bold text-white mb-1">
@@ -109,6 +119,16 @@ export default function OrdersPage() {
                                                 {order.code && (
                                                     <span className="text-green-400 font-bold ml-2">Code: {order.code}</span>
                                                 )}
+                                            </div>
+                                        ) : order.type === 'esim' ? (
+                                            <div className="mb-2">
+                                                <button
+                                                    onClick={() => setSelectedEsim(order)}
+                                                    className="text-xs flex items-center gap-1 bg-purple-500/10 text-purple-400 px-2 py-1 rounded hover:bg-purple-500/20 transition-colors"
+                                                >
+                                                    <QrCode className="w-3 h-3" />
+                                                    View Activation Details
+                                                </button>
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
@@ -141,12 +161,13 @@ export default function OrdersPage() {
                                 <div className="flex items-center justify-between md:justify-end gap-6 md:min-w-[300px]">
                                     <div className="text-right">
                                         <div className="text-sm text-gray-400">
-                                            {order.type === 'rental' ? 'Expires' : 'Quantity'}
+                                            {order.type === 'rental' ? 'Expires' : order.type === 'esim' ? 'Type' : 'Quantity'}
                                         </div>
                                         <div className="font-bold text-white">
                                             {order.type === 'rental' && order.expiresAt
                                                 ? format(new Date(order.expiresAt), 'h:mm a')
-                                                : order.quantity?.toLocaleString()}
+                                                : order.type === 'esim' ? 'Data Plan'
+                                                    : order.quantity?.toLocaleString()}
                                         </div>
                                     </div>
                                     <div className="text-right">
@@ -169,6 +190,61 @@ export default function OrdersPage() {
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* eSIM Details Modal */}
+            {selectedEsim && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-[#1C1C1E] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-white">eSIM Activation</h3>
+                            <button
+                                onClick={() => setSelectedEsim(null)}
+                                className="text-gray-400 hover:text-white transition-colors"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="p-8 space-y-6 flex flex-col items-center text-center">
+                            {selectedEsim.qr_code && (
+                                <div className="bg-white p-4 rounded-xl shadow-lg">
+                                    <img src={selectedEsim.qr_code} alt="eSIM QR Code" className="w-48 h-48" />
+                                </div>
+                            )}
+
+                            <div className="w-full space-y-4">
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Activation Code</label>
+                                    <button
+                                        onClick={() => copyToClipboard(selectedEsim.activation_code || '')}
+                                        className="w-full bg-black/30 border border-white/10 rounded-lg p-3 font-mono text-sm text-white hover:bg-white/5 transition-colors flex items-center justify-between group"
+                                    >
+                                        <span className="truncate">{selectedEsim.activation_code || 'N/A'}</span>
+                                        <Copy className="w-4 h-4 text-gray-400 group-hover:text-white" />
+                                    </button>
+                                </div>
+
+                                {selectedEsim.smdp_address && (
+                                    <div>
+                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">SM-DP+ Address</label>
+                                        <button
+                                            onClick={() => copyToClipboard(selectedEsim.smdp_address || '')}
+                                            className="w-full bg-black/30 border border-white/10 rounded-lg p-3 font-mono text-sm text-white hover:bg-white/5 transition-colors flex items-center justify-between group"
+                                        >
+                                            <span className="truncate">{selectedEsim.smdp_address}</span>
+                                            <Copy className="w-4 h-4 text-gray-400 group-hover:text-white" />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <p className="text-sm text-gray-400">
+                                Scan the QR code or manually enter the details in your device settings to activate your eSIM.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

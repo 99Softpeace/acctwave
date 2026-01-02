@@ -43,9 +43,30 @@ export async function POST(req: Request) {
         try {
             const order = await SMSPool.purchaseESIM(planId);
 
-            if (order.success === 0) {
-                throw new Error(order.message || 'Failed to purchase eSIM');
+            console.log('SMSPool eSIM Purchase Response:', order);
+
+            // Fetch details (QR code) immediately using the separate Profile endpoint
+            if (order.transactionId) {
+                console.log(`Fetching profile for TxID: ${order.transactionId}...`);
+                // Poll a few times in case of propagation delay
+                for (let i = 0; i < 3; i++) {
+                    await new Promise(r => setTimeout(r, 1000)); // 1s wait
+                    const details = await SMSPool.checkESIMOrder(order.transactionId);
+                    if (details && (details.qr_code || details.ac)) {
+                        console.log('Details fetched:', details);
+                        Object.assign(order, details); // Merge into order object
+                        break;
+                    }
+                }
             }
+
+            // Normalize order data to ensure consistent fields
+            const normalizedOrder = {
+                ...order,
+                qr_code: order.qr_code || order.qr || order.image || order.qrCode || order.qr_code_url || order.qrUrl || order.iccid,
+                activation_code: order.activation_code || order.code || order.activation || order.lpa || order.smdp_address || order.smdpAddress,
+                smdp_address: order.smdp_address || order.smdp || order.server || order.smdpAddress
+            };
 
             // Deduct from user wallet
             user.balance -= costInNaira;
@@ -54,19 +75,19 @@ export async function POST(req: Request) {
             // Create Transaction Record
             await Transaction.create({
                 user: user._id,
-                type: 'debit',
+                type: 'order',
                 amount: costInNaira,
                 category: 'esim_purchase',
-                status: 'completed',
+                status: 'successful',
                 description: `eSIM Purchase (Plan ID: ${planId})`,
                 reference: `ESIM-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
                 metadata: {
                     planId,
-                    orderData: order
+                    orderData: normalizedOrder
                 }
             });
 
-            return NextResponse.json({ success: true, order });
+            return NextResponse.json({ success: true, order: normalizedOrder });
 
         } catch (apiError: any) {
             console.error('SMSPool Purchase Error:', apiError);
