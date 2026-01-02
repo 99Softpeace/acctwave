@@ -27,6 +27,11 @@ export default function ModdedAppsPage() {
     const [quantity, setQuantity] = useState(1);
     const [purchasing, setPurchasing] = useState(false);
 
+    // Search & Filter State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortBy, setSortBy] = useState<'stock-desc' | 'price-asc' | 'price-desc' | 'name-asc'>('stock-desc');
+    const [showOutOfStock, setShowOutOfStock] = useState(false);
+
     // Fetch Catalog on Mount
     useEffect(() => {
         const fetchCatalog = async () => {
@@ -88,8 +93,46 @@ export default function ModdedAppsPage() {
         }
     };
 
-    // Calculate active products
-    const activeProducts = catalog[activeCategory] || [];
+    // --- Filtering Logic ---
+    const getFilteredProducts = () => {
+        let products: any[] = [];
+
+        if (searchQuery.trim()) {
+            // Global Search: Flatten all categories
+            Object.values(catalog).forEach(catProds => {
+                products = products.concat(catProds);
+            });
+
+            const query = searchQuery.toLowerCase();
+            products = products.filter(p =>
+                p.name.toLowerCase().includes(query) ||
+                (p.groupName || '').toLowerCase().includes(query)
+            );
+        } else {
+            // Category View
+            products = catalog[activeCategory] || [];
+        }
+
+        // Apply Stock Filter
+        if (!showOutOfStock) {
+            products = products.filter(p => p.inStock > 0);
+        }
+
+        // Apply Sort
+        products.sort((a, b) => {
+            switch (sortBy) {
+                case 'price-asc': return a.price - b.price;
+                case 'price-desc': return b.price - a.price;
+                case 'stock-desc': return b.inStock - a.inStock;
+                case 'name-asc': return a.name.localeCompare(b.name);
+                default: return 0;
+            }
+        });
+
+        return products;
+    };
+
+    const activeProducts = getFilteredProducts();
 
     // DETAILS VIEW
     if (viewMode === 'details' && selectedProduct) {
@@ -220,66 +263,112 @@ export default function ModdedAppsPage() {
     // LIST VIEW
     return (
         <div className="space-y-8">
-            <div>
-                <h1 className="text-2xl font-bold text-white">Premium Logs & Accounts</h1>
-                <p className="text-gray-400">High-quality aged accounts, social media logs, and premium subscriptions.</p>
+            <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+                <div>
+                    <h1 className="text-2xl font-bold text-white">Premium Logs & Accounts</h1>
+                    <p className="text-gray-400">High-quality aged accounts, social media logs, and premium subscriptions.</p>
+                </div>
+
+                {/* Search Bar */}
+                <div className="relative w-full md:w-80">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                        type="text"
+                        placeholder="Search products..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-primary/50 transition-colors"
+                    />
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                {/* Sidebar Categories */}
-                <div className="lg:col-span-3 space-y-2">
-                    <div className="glass-card p-4 rounded-xl border border-white/5">
-                        <h3 className="text-xs font-bold text-gray-500 uppercase mb-4 px-2">Categories</h3>
+                {/* Sidebar Categories (Hidden when searching) */}
+                {!searchQuery && (
+                    <div className="lg:col-span-3 space-y-2">
+                        <div className="glass-card p-4 rounded-xl border border-white/5">
+                            <h3 className="text-xs font-bold text-gray-500 uppercase mb-4 px-2">Categories</h3>
 
-                        {loadingCatalog ? (
-                            <div className="space-y-3">
-                                {[1, 2, 3, 4, 5, 6].map(i => (
-                                    <div key={i} className="h-10 bg-white/5 rounded-lg animate-pulse" />
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="space-y-1">
-                                {Object.entries(CATEGORY_CONFIG).map(([key, config]) => {
-                                    const Icon = config.icon;
-                                    const count = (catalog[key] || []).length;
-                                    return (
-                                        <button
-                                            key={key}
-                                            onClick={() => {
-                                                setActiveCategory(key);
-                                                setViewMode('list');
-                                            }}
-                                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${activeCategory === key
-                                                ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                                                : 'text-gray-400 hover:text-white hover:bg-white/5'
-                                                }`}
-                                        >
-                                            <Icon className="w-4 h-4" />
-                                            {config.name}
-                                            <span className="ml-auto text-xs opacity-60">
-                                                {count}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
+                            {loadingCatalog ? (
+                                <div className="space-y-3">
+                                    {[1, 2, 3, 4, 5, 6].map(i => (
+                                        <div key={i} className="h-10 bg-white/5 rounded-lg animate-pulse" />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="space-y-1">
+                                    {Object.entries(CATEGORY_CONFIG).map(([key, config]) => {
+                                        const Icon = config.icon;
+                                        const count = (catalog[key] || []).length;
+                                        return (
+                                            <button
+                                                key={key}
+                                                onClick={() => {
+                                                    setActiveCategory(key);
+                                                    setViewMode('list');
+                                                }}
+                                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${activeCategory === key
+                                                    ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                                                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                                    }`}
+                                            >
+                                                <Icon className="w-4 h-4" />
+                                                {config.name}
+                                                <span className="ml-auto text-xs opacity-60">
+                                                    {count}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Main Content */}
-                <div className="lg:col-span-9">
+                <div className={searchQuery ? 'lg:col-span-12' : 'lg:col-span-9'}>
                     <div className="glass-card rounded-2xl border border-white/5 overflow-hidden">
-                        {/* Table Header */}
-                        <div className="p-6 border-b border-white/5 flex justify-between items-center">
+                        {/* Toolbar: Category Title + Filters */}
+                        <div className="p-4 sm:p-6 border-b border-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                                {CATEGORY_CONFIG[activeCategory]?.name}
+                                {searchQuery ? 'Search Results' : CATEGORY_CONFIG[activeCategory]?.name}
                                 {!loadingCatalog && (
                                     <span className="text-xs font-normal text-gray-500 bg-white/5 px-2 py-1 rounded-full">
                                         {activeProducts.length} Items
                                     </span>
                                 )}
                             </h2>
+
+                            {/* Filters */}
+                            <div className="flex flex-wrap items-center gap-3">
+                                <div className="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-lg border border-white/10">
+                                    <input
+                                        type="checkbox"
+                                        id="outOfStock"
+                                        checked={showOutOfStock}
+                                        onChange={(e) => setShowOutOfStock(e.target.checked)}
+                                        className="w-4 h-4 rounded border-gray-600 text-primary bg-black/20 focus:ring-offset-0 focus:ring-0"
+                                    />
+                                    <label htmlFor="outOfStock" className="text-sm text-gray-400 cursor-pointer select-none">
+                                        Show OOS
+                                    </label>
+                                </div>
+
+                                <div className="relative">
+                                    <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500" />
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value as any)}
+                                        className="bg-white/5 border border-white/10 rounded-lg pl-8 pr-4 py-2 text-sm text-gray-300 focus:outline-none focus:border-primary/50 appearance-none cursor-pointer hover:bg-white/10 transition-colors"
+                                    >
+                                        <option value="stock-desc">Highest Stock</option>
+                                        <option value="price-asc">Price: Low to High</option>
+                                        <option value="price-desc">Price: High to Low</option>
+                                        <option value="name-asc">Name: A-Z</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Product Table */}
@@ -327,7 +416,7 @@ export default function ModdedAppsPage() {
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
                                                     <button className="text-primary hover:text-primary/80 text-sm font-medium flex items-center gap-1 ml-auto">
-                                                        Buy <ChevronRight className="w-4 h-4" />
+                                                        View Details <ChevronRight className="w-4 h-4" />
                                                     </button>
                                                 </td>
                                             </tr>
