@@ -13,7 +13,7 @@ const CACHE_TTL = 1000 * 60 * 10; // 10 minutes
 
 // 1 USD = 1650 NGN (Configurable)
 const EXCHANGE_RATE = 1650;
-const MARKUP = 1.3; // 30% profit
+const MARKUP = 1.4; // 40% profit
 
 export interface BulkAccProduct {
     code: string;
