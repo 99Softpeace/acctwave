@@ -53,7 +53,19 @@ export async function GET(request: Request) {
                     const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000));
                     const priceUSD = await Promise.race([pricePromise, timeoutPromise]) as number;
 
-                    let finalPrice = calculatePrice(priceUSD, 'SMSPOOL');
+                    let margin = 70; // Default
+
+                    if (effectiveCountryId === '1') {
+                        margin = 600;
+                    } else {
+                        // Non-US: Increase margin to 800% EXCEPT for WhatsApp and Telegram
+                        const nameLower = s.name.toLowerCase();
+                        if (!nameLower.includes('whatsapp') && !nameLower.includes('telegram')) {
+                            margin = 800;
+                        }
+                    }
+
+                    let finalPrice = calculatePrice(priceUSD, margin);
 
                     // Custom Overrides for USA (ID 1)
                     if (effectiveCountryId === '1') {
@@ -63,6 +75,12 @@ export async function GET(request: Request) {
                             finalPrice = 3800;
                         } else if (s.name.toLowerCase().includes('twitter') || s.name.toLowerCase().includes('x')) {
                             finalPrice = 1380;
+                        } else if (s.name.toLowerCase().includes('facebook')) {
+                            finalPrice = 2980;
+                        } else if (s.name.toLowerCase().includes('discord')) {
+                            finalPrice = 2980;
+                        } else if (s.name.toLowerCase().includes('whatsapp')) {
+                            finalPrice = 3927;
                         }
                     }
 
@@ -72,7 +90,19 @@ export async function GET(request: Request) {
                         price: finalPrice
                     };
                 } catch (error) {
-                    let fallbackPrice = calculatePrice(0.5, 'SMSPOOL');
+                    let margin = 70; // Default
+
+                    if (effectiveCountryId === '1') {
+                        margin = 600;
+                    } else {
+                        const nameLower = s.name.toLowerCase();
+                        if (!nameLower.includes('whatsapp') && !nameLower.includes('telegram')) {
+                            margin = 800;
+                        }
+                    }
+
+                    let fallbackPrice = calculatePrice(0.5, margin);
+
                     // Custom Overrides for USA (ID 1)
                     if (effectiveCountryId === '1') {
                         if (s.name.toLowerCase().includes('snapchat')) {
@@ -81,6 +111,12 @@ export async function GET(request: Request) {
                             fallbackPrice = 3800;
                         } else if (s.name.toLowerCase().includes('twitter') || s.name.toLowerCase().includes('x')) {
                             fallbackPrice = 1380;
+                        } else if (s.name.toLowerCase().includes('facebook')) {
+                            fallbackPrice = 2980;
+                        } else if (s.name.toLowerCase().includes('discord')) {
+                            fallbackPrice = 2980;
+                        } else if (s.name.toLowerCase().includes('whatsapp')) {
+                            fallbackPrice = 3927;
                         }
                     }
 
@@ -106,14 +142,8 @@ export async function GET(request: Request) {
     }
 }
 
-function calculatePrice(costUSD: number, provider: 'TV' | 'SMSPOOL' = 'TV'): number {
+function calculatePrice(costUSD: number, margin: number = 70): number {
     const EXCHANGE_RATE = 1750; // Base NGN/USD rate
-
-    let margin = 70; // Default 70% for SMSPool/Others
-    if (provider === 'TV') {
-        margin = 400; // 400% for TextVerified (USA Premium)
-    }
-
     const multiplier = 1 + (margin / 100);
     return Math.ceil(costUSD * EXCHANGE_RATE * multiplier);
 }
