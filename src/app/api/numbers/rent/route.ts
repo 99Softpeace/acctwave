@@ -4,7 +4,7 @@ import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import VirtualNumber from '@/models/VirtualNumber';
 import { authOptions } from '@/lib/auth';
-import { TextVerified } from '@/lib/textverified';
+
 import { SMSPool } from '@/lib/smspool';
 
 export async function POST(req: Request) {
@@ -38,51 +38,27 @@ export async function POST(req: Request) {
         let provider;
         let actualPrice = maxPrice; // Fallback
 
-        // 2. Rent Number - "Traffic Cop" Logic
+        // 2. Rent Number (Unified SMSPool Logic)
+        provider = 'smspool';
+        providerPrefix = 'SP';
+
+        let effectiveCountryId = countryId;
         if (countryId === 'US') {
-            // Strict routing to TextVerified for US
-            provider = 'textverified';
-            providerPrefix = 'TV';
-            console.log(`[Rent] Routing US request to TextVerified for service ${serviceId}`);
+            effectiveCountryId = '1';
+        }
 
-            try {
-                // Use createVerification for one-time SMS
-                const verificationResponse = await TextVerified.createVerification(serviceId);
+        console.log(`[Rent] Routing request to SMSPool for service ${serviceId} in ${effectiveCountryId} (Req: ${countryId})`);
 
-                console.log('[API] Rental Result Raw:', JSON.stringify(verificationResponse, null, 2));
-
-                if (!verificationResponse || !verificationResponse.id) {
-                    throw new Error('Failed to rent number: Invalid response from provider');
-                }
-
-                rentalResult = {
-                    id: verificationResponse.id,
-                    number: verificationResponse.number,
-                    expiresIn: 300 // 5 minutes waiting time
-                };
-            } catch (error: any) {
-                console.error('[Rent] TextVerified failed:', error);
-                // Do NOT fallback to SMSPool for US as per strict requirement to avoid VoIP errors
-                throw new Error('Failed to rent US number: ' + (error.message || 'Provider error'));
-            }
-
-        } else {
-            // SMSPool for other countries
-            provider = 'smspool';
-            providerPrefix = 'SP';
-            console.log(`[Rent] Routing non-US request to SMSPool for service ${serviceId} in ${countryId}`);
-
-            try {
-                const order = await SMSPool.orderSMS(countryId, serviceId);
-                rentalResult = {
-                    id: order.order_id,
-                    number: order.number,
-                    expiresIn: 1200 // 20 mins default
-                };
-            } catch (error: any) {
-                console.error('[Rent] SMSPool failed:', error);
-                throw new Error('Failed to rent number: ' + (error.message || 'Provider error'));
-            }
+        try {
+            const order = await SMSPool.orderSMS(effectiveCountryId, serviceId);
+            rentalResult = {
+                id: order.order_id,
+                number: order.number,
+                expiresIn: 1200 // 20 mins default
+            };
+        } catch (error: any) {
+            console.error('[Rent] SMSPool failed:', error);
+            throw new Error('Failed to rent number via SMSPool: ' + (error.message || 'Provider error'));
         }
 
         // 3. Deduct Balance
