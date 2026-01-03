@@ -15,6 +15,10 @@ export default function TutorialsPage() {
         {
             src: "https://www.youtube.com/embed/YEuhrQcJJ6I",
             title: "HOW TO BUY FOREIGN NUMBERS ON ACCTWAVE ✨"
+        },
+        {
+            src: "https://www.youtube.com/embed/c_5yGoivAV4",
+            title: "HOW TO ACTIVATE SOCIAL MEDIA LOGS"
         }
     ];
 
