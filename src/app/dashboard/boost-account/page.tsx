@@ -62,6 +62,14 @@ export default function NewOrderPage() {
                                 </span>
                             </li>
                         </ul>
+                        <ul className="space-y-4 text-gray-400 text-sm mt-4">
+                            <li className="flex items-start gap-3">
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
+                                <span className="flex-1 leading-relaxed">
+                                    For <strong>Views</strong> boosting, please enter the <strong className="text-white font-semibold">Video Link</strong>, not your profile link.
+                                </span>
+                            </li>
+                        </ul>
                     </div>
 
                     <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-xl flex gap-3">

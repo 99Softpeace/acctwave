@@ -389,7 +389,7 @@ export default function OrderForm() {
                                         type="url"
                                         value={link}
                                         onChange={(e) => setLink(e.target.value)}
-                                        placeholder="https://instagram.com/username"
+                                        placeholder={selectedService?.name?.toLowerCase().includes('view') ? "https://instagram.com/reel/... (Enter Video Link)" : "https://instagram.com/username"}
                                         className="w-full bg-[#080B1A] border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                                         required
                                     />
