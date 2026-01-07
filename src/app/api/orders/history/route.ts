@@ -91,7 +91,79 @@ export async function GET(req: Request) {
         );
 
         // Optional: Update status from SMM provider for pending orders (Only for Boosts)
-        // ... (We can skip re-checking rentals here as active/route handles that)
+        await Promise.all(normalizedBoosts.map(async (order: any) => {
+            const mutableStatuses = ['Pending', 'In progress', 'Processing', 'Partial'];
+            if (mutableStatuses.includes(order.status) && order.external_order_id) {
+                try {
+                    const statusRes = await getOrderStatus(order.external_order_id);
+                    // SMM providers usually return { status: "Completed", ... } or { order: "123", status: "Completed" }
+                    // Adjust based on actual response. Assuming keys like 'status'
+                    const remoteStatus = statusRes.status;
+
+                    if (remoteStatus && remoteStatus !== order.status) {
+                        console.log(`[Order Sync] Updating Order ${order._id}: ${order.status} -> ${remoteStatus}`);
+
+                        // Update in DB
+                        await Order.findByIdAndUpdate(order._id, { status: remoteStatus });
+
+                        // Update in Response
+                        order.status = remoteStatus;
+                    }
+                } catch (err) {
+                    console.error(`[Order Sync] Failed to check status for ${order._id}:`, err);
+                }
+            }
+        }));
+
+        // Sync Virtual Number Rentals (Check for SMS Code)
+        await Promise.all(normalizedRentals.map(async (rental: any) => {
+            if (rental.status === 'Active' && rental.external_order_id) {
+                try {
+                    const check = await SMSPool.checkOrder(rental.external_order_id);
+                    if (check.code) {
+                        console.log(`[Rental Sync] Order ${rental._id} completed. Code: ${check.code}`);
+                        await VirtualNumber.findByIdAndUpdate(rental._id, {
+                            status: 'completed',
+                            smsCode: check.code
+                        });
+                        rental.status = 'Completed';
+                        rental.code = check.code;
+                    }
+                } catch (e) {
+                    console.error(`[Rental Sync] Error for ${rental._id}:`, e);
+                }
+            }
+        }));
+
+        // Sync eSIM Transactions (Check for Profile/QR)
+        await Promise.all(normalizedEsims.map(async (esim: any) => {
+            const pendingStatuses = ['pending', 'processing', 'submitted'];
+            if (pendingStatuses.includes(esim.status.toLowerCase()) && esim.external_order_id) {
+                try {
+                    const details = await SMSPool.checkESIMOrder(esim.external_order_id);
+                    if (details) {
+                        console.log(`[eSIM Sync] Order ${esim._id} completed.`);
+
+                        const tx = await Transaction.findById(esim._id);
+                        if (tx) {
+                            tx.status = 'successful';
+                            tx.metadata = {
+                                ...tx.metadata,
+                                orderData: details
+                            };
+                            await tx.save();
+
+                            esim.status = 'Completed';
+                            esim.qr_code = details.qr_code;
+                            esim.activation_code = details.activation_code;
+                            esim.smdp_address = details.smdp_address;
+                        }
+                    }
+                } catch (e) {
+                    console.error(`[eSIM Sync] Error for ${esim._id}:`, e);
+                }
+            }
+        }));
 
         return NextResponse.json({
             success: true,
