@@ -131,19 +131,7 @@ export default function SignupPage() {
                                 </div>
                             )}
 
-                            <div>
-                                <label className="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wider drop-shadow-sm">Referral Code <span className="text-white/70 italic normal-case ml-1">(optional)</span></label>
-                                <div className="relative">
-                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        value={formData.referralCode}
-                                        onChange={(e) => setFormData({ ...formData, referralCode: e.target.value.toUpperCase() })}
-                                        className="w-full bg-transparent border border-white/20 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
-                                        placeholder="Enter code (e.g. JOY123)"
-                                    />
-                                </div>
-                            </div>
+
                             <div>
                                 <label className="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wider drop-shadow-sm">Full Name</label>
                                 <div className="relative">
@@ -234,7 +222,22 @@ export default function SignupPage() {
                                 </div>
                             </div>
 
+                            <div>
+                                <label className="block text-xs font-bold text-gray-300 mb-1.5 uppercase tracking-wider drop-shadow-sm">Referral Code <span className="text-white/70 italic normal-case ml-1">(optional)</span></label>
+                                <div className="relative">
+                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        value={formData.referralCode}
+                                        onChange={(e) => setFormData({ ...formData, referralCode: e.target.value.toUpperCase() })}
+                                        className="w-full bg-transparent border border-white/20 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+                                        placeholder="Enter code (e.g. JOY123)"
+                                    />
+                                </div>
+                            </div>
+
                             <button
+
                                 type="submit"
                                 disabled={isLoading}
                                 className="w-full bg-primary/90 hover:bg-primary text-white font-bold py-3.5 rounded-xl shadow-[0_0_20px_rgba(0,122,255,0.3)] hover:shadow-[0_0_30px_rgba(0,122,255,0.5)] transition-all flex items-center justify-center gap-2 mt-6 disabled:opacity-70 disabled:cursor-not-allowed backdrop-blur-sm"
