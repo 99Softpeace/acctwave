@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import OrderForm from '@/components/order/OrderForm';
+import ServiceColorInfo from '@/components/order/ServiceColorInfo';
 import { AlertCircle, Info } from 'lucide-react';
 
 export default function NewOrderPage() {
@@ -23,6 +24,7 @@ export default function NewOrderPage() {
                     <Suspense fallback={<div className="text-white">Loading form...</div>}>
                         <OrderForm />
                     </Suspense>
+                    <ServiceColorInfo />
                 </div>
 
                 {/* Right Side: Info */}
@@ -63,6 +65,12 @@ export default function NewOrderPage() {
                             </li>
                         </ul>
                         <ul className="space-y-4 text-gray-400 text-sm mt-4">
+                            <li className="flex items-start gap-3">
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
+                                <span className="flex-1 leading-relaxed">
+                                    Please check the <strong className="text-white font-semibold">Service Color Categorization</strong> section below to understand the quality tier of your selected service before purchasing.
+                                </span>
+                            </li>
                             <li className="flex items-start gap-3">
                                 <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
                                 <span className="flex-1 leading-relaxed">

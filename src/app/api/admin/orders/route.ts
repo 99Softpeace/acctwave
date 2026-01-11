@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
+import VirtualNumber from '@/models/VirtualNumber';
+import Transaction from '@/models/Transaction';
 import { authOptions } from '@/lib/auth';
 
 export async function GET(req: Request) {
@@ -18,25 +20,127 @@ export async function GET(req: Request) {
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
         const status = searchParams.get('status');
-        const skip = (page - 1) * limit;
+        // Fetch up to (page * limit) items from EACH collection to ensuring correct sorting across collections
+        // This is a simplified approach. For massive datasets, separate counts and smarter cursors are needed.
+        const fetchLimit = page * limit;
 
-        const query: any = {};
+        // 1. Build Queries
+        const boostQuery: any = {};
+        const rentalQuery: any = {};
+        const esimQuery: any = {
+            $or: [
+                { category: 'esim_purchase' },
+                { description: { $regex: 'eSIM Purchase', $options: 'i' } }
+            ]
+        };
+
         if (status && status !== 'All') {
-            query.status = status;
+            // Map common status to specific model statuses
+            // boost: Pending, In progress, Completed, Partial, Canceled, Processing
+            // rental: active, completed, cancelled, expired, pending
+            // esim (transaction): successful, pending, failed
+
+            boostQuery.status = status;
+
+            // Approximate mapping for others
+            if (status === 'Completed') {
+                rentalQuery.status = { $in: ['completed'] };
+                esimQuery.status = 'successful';
+            } else if (status === 'Pending') {
+                rentalQuery.status = { $in: ['active', 'pending'] };
+                esimQuery.status = 'pending';
+            } else if (status === 'Canceled') {
+                rentalQuery.status = { $in: ['cancelled', 'expired'] };
+                esimQuery.status = { $in: ['failed', 'cancelled'] };
+            } else {
+                // Fallback: try to match string
+                rentalQuery.status = status.toLowerCase();
+                esimQuery.status = status.toLowerCase();
+            }
         }
 
-        const orders = await Order.find(query)
-            .populate('user', 'name email') // Populate user details
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit)
-            .lean();
+        // 2. Fetch Data in Parallel
+        const [boosts, rentals, esims] = await Promise.all([
+            Order.find(boostQuery)
+                .populate('user', 'name email')
+                .sort({ createdAt: -1 })
+                .limit(fetchLimit)
+                .lean(),
+            VirtualNumber.find(rentalQuery)
+                .populate('user', 'name email')
+                .sort({ createdAt: -1 })
+                .limit(fetchLimit)
+                .lean(),
+            Transaction.find(esimQuery)
+                .populate('user', 'name email')
+                .sort({ createdAt: -1 })
+                .limit(fetchLimit)
+                .lean(),
+        ]);
 
-        const total = await Order.countDocuments(query);
+        // 3. Normalize Data
+        const normalizedBoosts = boosts.map((o: any) => ({
+            _id: o._id,
+            original_type: 'boost',
+            user: o.user,
+            service_name: o.service_name,
+            link: o.link,
+            quantity: o.quantity,
+            charge: o.charge,
+            status: o.status,
+            createdAt: o.createdAt,
+            external_order_id: o.external_order_id
+        }));
+
+        const normalizedRentals = rentals.map((r: any) => ({
+            _id: r._id,
+            original_type: 'rental',
+            user: r.user,
+            service_name: `Foreign Number - ${r.serviceName} (${r.countryName})`,
+            link: r.number, // Display number as link
+            quantity: 1,
+            charge: r.price,
+            status: r.status.charAt(0).toUpperCase() + r.status.slice(1), // Capitalize
+            createdAt: r.createdAt,
+            external_order_id: r.externalId,
+            details: r.smsCode ? `Code: ${r.smsCode}` : 'Waiting for SMS...'
+        }));
+
+        const normalizedEsims = esims.map((t: any) => ({
+            _id: t._id,
+            original_type: 'esim',
+            user: t.user,
+            service_name: t.description || 'eSIM Purchase',
+            link: null, // No link for eSIM
+            quantity: 1,
+            charge: t.amount,
+            status: t.status === 'successful' ? 'Completed' : (t.status.charAt(0).toUpperCase() + t.status.slice(1)),
+            createdAt: t.createdAt,
+            external_order_id: t.reference,
+            details: t.metadata?.planName || 'eSIM Data Plan'
+        }));
+
+        // 4. Merge and Sort
+        const allOrders = [...normalizedBoosts, ...normalizedRentals, ...normalizedEsims].sort((a: any, b: any) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        // 5. Paginate
+        const startIndex = (page - 1) * limit;
+        const paginatedOrders = allOrders.slice(startIndex, startIndex + limit);
+
+        // 6. Get Counts (Approximation for performance)
+        // Note: Total pages might be slightly off due to the fetchLimit strategy, 
+        // but it's a sufficient trade-off for not querying all documents every time.
+        // For accurate counts, we'd need separate CountDocuments queries.
+        const totalBoosts = await Order.countDocuments(boostQuery);
+        const totalRentals = await VirtualNumber.countDocuments(rentalQuery);
+        const totalEsims = await Transaction.countDocuments(esimQuery);
+        const total = totalBoosts + totalRentals + totalEsims;
 
         return NextResponse.json({
             success: true,
-            data: orders,
+            data: paginatedOrders,
             pagination: {
                 total,
                 page,
@@ -45,7 +149,7 @@ export async function GET(req: Request) {
         });
 
     } catch (error: any) {
-        console.error('Error fetching orders:', error);
+        console.error('Error fetching admin orders:', error);
         return NextResponse.json(
             { message: error.message || 'Internal server error' },
             { status: 500 }

@@ -88,7 +88,7 @@ export class SMSPool {
             // Note: SMSPool documentation says /service/retrieve_all returns a list of services.
             // The price field might be 'rate' or 'cost' or 'price'. 
             // Based on common API patterns, let's try to be robust.
-            const data = await this.request('/service/retrieve_all');
+            const data = await this.request('/service/retrieve_all', { country: countryId });
 
             console.log('=== SMSPool getServices DEBUG ===');
             console.log('Total services received:', data.length);

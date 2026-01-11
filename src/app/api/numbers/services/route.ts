@@ -27,10 +27,24 @@ export async function GET(request: Request) {
             .sort((a: any, b: any) => a.name.localeCompare(b.name));
 
         // Determine effective Country ID for SMSPool
-        // If frontend sends 'US', map it to '1' (SMSPool United States)
+        // The API expects an integer ID.
+        // 1. Try to find by short_name (e.g. 'US', 'GB')
+        // 2. Try to find by name (e.g. 'United States', 'United Kingdom')
+        // 3. Fallback to the provided param if it looks like an ID
         let effectiveCountryId = countryId;
-        if (countryId === 'US') {
-            effectiveCountryId = '1';
+
+        const countryMatch = countriesData.find((c: any) =>
+            c.short_name.toUpperCase() === countryId.toUpperCase() ||
+            c.name.toLowerCase() === countryId.toLowerCase() ||
+            c.id == countryId
+        );
+
+        if (countryMatch) {
+            effectiveCountryId = countryMatch.id;
+        } else if (countryId.toUpperCase() === 'UK') {
+            // Special case for manual "UK" param often used
+            const ukMatch = countriesData.find((c: any) => c.short_name === 'GB' || c.name === 'United Kingdom');
+            if (ukMatch) effectiveCountryId = ukMatch.id;
         }
 
         // Fetch Services using SMSPool for ALL countries (including US)
@@ -41,7 +55,8 @@ export async function GET(request: Request) {
         const prioritizedServices = spServices.filter(s => popularServices.some(p => s.name.toLowerCase().includes(p.toLowerCase())));
         const otherServices = spServices.filter(s => !popularServices.some(p => s.name.toLowerCase().includes(p.toLowerCase())));
 
-        const servicesToFetch = [...prioritizedServices, ...otherServices].slice(0, 200);
+        // Increase limit to 500 to catch more services
+        const servicesToFetch = [...prioritizedServices, ...otherServices].slice(0, 500);
 
         console.log(`Fetching prices for ${servicesToFetch.length} services in country ${effectiveCountryId} (Req: ${countryId})...`);
 

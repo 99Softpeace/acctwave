@@ -114,13 +114,21 @@ export default function AdminOrdersPage() {
                                                 <span className="text-xs text-gray-500">{order.user?.email}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 max-w-[200px] truncate" title={order.service_name}>
-                                            {order.service_name}
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col max-w-[200px]">
+                                                <span className="truncate" title={order.service_name}>{order.service_name}</span>
+                                                {order.details && <span className="text-xs text-gray-500 truncate" title={order.details}>{order.details}</span>}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <a href={order.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-blue-400 flex items-center gap-1">
-                                                Link <ExternalLink className="w-3 h-3" />
-                                            </a>
+                                            {order.link && (order.link.startsWith('http') ? (
+                                                <a href={order.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-blue-400 flex items-center gap-1">
+                                                    Link <ExternalLink className="w-3 h-3" />
+                                                </a>
+                                            ) : (
+                                                <span className="text-gray-400 font-mono text-xs">{order.link}</span>
+                                            ))}
+                                            {!order.link && <span className="text-gray-600">-</span>}
                                         </td>
                                         <td className="px-6 py-4">{order.quantity}</td>
                                         <td className="px-6 py-4 font-bold text-white">₦{order.charge?.toLocaleString()}</td>
