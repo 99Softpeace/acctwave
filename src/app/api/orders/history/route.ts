@@ -8,6 +8,8 @@ import { authOptions } from '@/lib/auth';
 import { getOrderStatus } from '@/lib/smm';
 import { SMSPool } from '@/lib/smspool';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
     try {
         const session = await getServerSession(authOptions);
@@ -26,16 +28,14 @@ export async function GET(req: Request) {
         const rentalOrders = await VirtualNumber.find({ user: (session.user as any).id })
             .lean();
 
-        // Fetch eSIM Transactions (including legacy ones missing category)
-        const esimTransactions = await Transaction.find({
+        // Fetch ALL Transaction-based Services (eSIM, Data, Airtime, etc.)
+        // Filter by type: 'order' covers all of these.
+        const miscTransactions = await Transaction.find({
             user: (session.user as any).id,
-            $or: [
-                { category: 'esim_purchase' },
-                { description: { $regex: 'eSIM Purchase', $options: 'i' } }
-            ]
+            type: 'order'
         }).sort({ createdAt: -1 }).lean();
 
-        console.log(`History API: User ${(session.user as any).id} - Found ${esimTransactions.length} eSIMs`);
+        console.log(`History API: User ${(session.user as any).id} - Found ${miscTransactions.length} Misc/Transaction Orders`);
 
         // Normalize and Combine
         const normalizedBoosts = boostOrders.map((o: any) => ({
@@ -68,25 +68,29 @@ export async function GET(req: Request) {
 
         // Normalize and Combine
         // Self-heal eSIM orders: Check for missing codes and fetch them (Robust version)
-        const normalizedEsims = esimTransactions.map((t: any) => {
+        const normalizedMisc = miscTransactions.map((t: any) => {
+            const isEsim = t.category === 'esim_purchase' || t.description?.toLowerCase().includes('esim') || t.metadata?.planId;
             const od = t.metadata?.orderData || {};
+
             return {
                 _id: t._id,
-                type: 'esim',
-                service_name: t.description || 'eSIM Purchase',
+                type: isEsim ? 'esim' : 'misc',
+                service_name: t.description || (isEsim ? 'eSIM Purchase' : 'Service Order'),
                 charge: t.amount,
                 status: t.status === 'successful' ? 'Completed' : t.status,
                 createdAt: t.createdAt,
-                // Mapped fields
-                qr_code: od.qr_code || od.qr || od.image || od.qrCode || od.qr_code_url || od.qrUrl || od.iccid,
-                activation_code: od.activation_code || od.code || od.activation || od.lpa || od.smdp_address || od.smdpAddress,
-                smdp_address: od.smdp_address || od.smdp || od.server || od.smdpAddress,
+                // Mapped fields for eSIM
+                qr_code: isEsim ? (od.qr_code || od.qr || od.image || od.qrCode || od.qr_code_url || od.qrUrl || od.iccid) : undefined,
+                activation_code: isEsim ? (od.activation_code || od.code || od.activation || od.lpa || od.smdp_address || od.smdpAddress) : undefined,
+                smdp_address: isEsim ? (od.smdp_address || od.smdp || od.server || od.smdpAddress) : undefined,
                 plan_id: t.metadata?.planId,
-                external_order_id: t.reference
+                external_order_id: t.reference,
+                // Mapped fields for Generic/Data
+                details: isEsim ? (t.metadata?.planName || 'eSIM Data Plan') : (t.metadata?.network || t.category || '')
             };
         });
 
-        const allOrders = [...normalizedBoosts, ...normalizedRentals, ...normalizedEsims].sort((a: any, b: any) =>
+        const allOrders = [...normalizedBoosts, ...normalizedRentals, ...normalizedMisc].sort((a: any, b: any) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
 
@@ -136,31 +140,34 @@ export async function GET(req: Request) {
         }));
 
         // Sync eSIM Transactions (Check for Profile/QR)
-        await Promise.all(normalizedEsims.map(async (esim: any) => {
-            const pendingStatuses = ['pending', 'processing', 'submitted'];
-            if (pendingStatuses.includes(esim.status.toLowerCase()) && esim.external_order_id) {
-                try {
-                    const details = await SMSPool.checkESIMOrder(esim.external_order_id);
-                    if (details) {
-                        console.log(`[eSIM Sync] Order ${esim._id} completed.`);
+        await Promise.all(normalizedMisc.map(async (misc: any) => {
+            // Only syncing statuses for actual eSIMs
+            if (misc.type === 'esim') {
+                const pendingStatuses = ['pending', 'processing', 'submitted'];
+                if (pendingStatuses.includes(misc.status.toLowerCase()) && misc.external_order_id) {
+                    try {
+                        const details = await SMSPool.checkESIMOrder(misc.external_order_id);
+                        if (details) {
+                            console.log(`[eSIM Sync] Order ${misc._id} completed.`);
 
-                        const tx = await Transaction.findById(esim._id);
-                        if (tx) {
-                            tx.status = 'successful';
-                            tx.metadata = {
-                                ...tx.metadata,
-                                orderData: details
-                            };
-                            await tx.save();
+                            const tx = await Transaction.findById(misc._id);
+                            if (tx) {
+                                tx.status = 'successful';
+                                tx.metadata = {
+                                    ...tx.metadata,
+                                    orderData: details
+                                };
+                                await tx.save();
 
-                            esim.status = 'Completed';
-                            esim.qr_code = details.qr_code;
-                            esim.activation_code = details.activation_code;
-                            esim.smdp_address = details.smdp_address;
+                                misc.status = 'Completed';
+                                misc.qr_code = details.qr_code;
+                                misc.activation_code = details.activation_code;
+                                misc.smdp_address = details.smdp_address;
+                            }
                         }
+                    } catch (e) {
+                        console.error(`[eSIM Sync] Error for ${misc._id}:`, e);
                     }
-                } catch (e) {
-                    console.error(`[eSIM Sync] Error for ${esim._id}:`, e);
                 }
             }
         }));

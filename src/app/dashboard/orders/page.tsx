@@ -7,7 +7,7 @@ import { toast } from 'react-hot-toast';
 
 interface Order {
     _id: string;
-    type?: 'boost' | 'rental' | 'esim';
+    type?: 'boost' | 'rental' | 'esim' | 'misc';
     service_name: string;
     link?: string;
     quantity?: number;
@@ -24,6 +24,7 @@ interface Order {
     qr_code?: string;
     activation_code?: string;
     smdp_address?: string;
+    details?: string;
 }
 
 export default function OrdersPage() {
@@ -131,6 +132,17 @@ export default function OrdersPage() {
                                                     View Activation Details
                                                 </button>
                                             </div>
+                                        ) : order.type === 'misc' ? (
+                                            <div className="flex flex-col gap-1 items-start text-sm text-gray-400 mb-2">
+                                                <span className="text-gray-300 font-medium">
+                                                    {order.service_name}
+                                                </span>
+                                                {order.details && (
+                                                    <span className="text-xs text-gray-500 bg-white/5 px-2 py-0.5 rounded">
+                                                        {order.details}
+                                                    </span>
+                                                )}
+                                            </div>
                                         ) : (
                                             <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
                                                 {order.code ? (
@@ -143,22 +155,26 @@ export default function OrdersPage() {
                                                     </button>
                                                 ) : (
                                                     <div className="flex items-center gap-2">
-                                                        <a
-                                                            href={order.link}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="hover:text-primary flex items-center gap-1 truncate max-w-[200px] md:max-w-[300px]"
-                                                        >
-                                                            {order.link || 'Processing...'}
-                                                            {order.link && <ExternalLink className="w-3 h-3" />}
-                                                        </a>
-                                                        {order.link && (
-                                                            <button
-                                                                onClick={() => copyToClipboard(order.link || '')}
-                                                                className="p-1 hover:bg-white/10 rounded"
-                                                            >
-                                                                <Copy className="w-3 h-3" />
-                                                            </button>
+                                                        {order.link ? (
+                                                            <>
+                                                                <a
+                                                                    href={order.link}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="hover:text-primary flex items-center gap-1 truncate max-w-[200px] md:max-w-[300px]"
+                                                                >
+                                                                    {order.link}
+                                                                    <ExternalLink className="w-3 h-3" />
+                                                                </a>
+                                                                <button
+                                                                    onClick={() => copyToClipboard(order.link || '')}
+                                                                    className="p-1 hover:bg-white/10 rounded"
+                                                                >
+                                                                    <Copy className="w-3 h-3" />
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <span className="text-gray-500 italic">Processing...</span>
                                                         )}
                                                     </div>
                                                 )}

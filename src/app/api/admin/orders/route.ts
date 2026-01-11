@@ -6,6 +6,8 @@ import VirtualNumber from '@/models/VirtualNumber';
 import Transaction from '@/models/Transaction';
 import { authOptions } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
     try {
         const session = await getServerSession(authOptions);
@@ -20,47 +22,44 @@ export async function GET(req: Request) {
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
         const status = searchParams.get('status');
-        // Fetch up to (page * limit) items from EACH collection to ensuring correct sorting across collections
-        // This is a simplified approach. For massive datasets, separate counts and smarter cursors are needed.
-        const fetchLimit = page * limit;
+        // Fetch up to (page * limit * 5) items from EACH collection to ensuring correct sorting across collections
+        // This prevents recent items from one collection being "hidden" by generic limit cutoffs if another collection has many recent items.
+        const fetchLimit = (page * limit) * 5;
 
         // 1. Build Queries
         const boostQuery: any = {};
         const rentalQuery: any = {};
-        const esimQuery: any = {
-            $or: [
-                { category: 'esim_purchase' },
-                { description: { $regex: 'eSIM Purchase', $options: 'i' } }
-            ]
+        const miscQuery: any = {
+            type: 'order'
         };
 
         if (status && status !== 'All') {
             // Map common status to specific model statuses
             // boost: Pending, In progress, Completed, Partial, Canceled, Processing
             // rental: active, completed, cancelled, expired, pending
-            // esim (transaction): successful, pending, failed
+            // misc (transaction): successful, pending, failed
 
             boostQuery.status = status;
 
             // Approximate mapping for others
             if (status === 'Completed') {
                 rentalQuery.status = { $in: ['completed'] };
-                esimQuery.status = 'successful';
+                miscQuery.status = 'successful';
             } else if (status === 'Pending') {
                 rentalQuery.status = { $in: ['active', 'pending'] };
-                esimQuery.status = 'pending';
+                miscQuery.status = 'pending';
             } else if (status === 'Canceled') {
                 rentalQuery.status = { $in: ['cancelled', 'expired'] };
-                esimQuery.status = { $in: ['failed', 'cancelled'] };
+                miscQuery.status = { $in: ['failed', 'cancelled'] };
             } else {
                 // Fallback: try to match string
                 rentalQuery.status = status.toLowerCase();
-                esimQuery.status = status.toLowerCase();
+                miscQuery.status = status.toLowerCase();
             }
         }
 
         // 2. Fetch Data in Parallel
-        const [boosts, rentals, esims] = await Promise.all([
+        const [boosts, rentals, miscOrders] = await Promise.all([
             Order.find(boostQuery)
                 .populate('user', 'name email')
                 .sort({ createdAt: -1 })
@@ -71,7 +70,7 @@ export async function GET(req: Request) {
                 .sort({ createdAt: -1 })
                 .limit(fetchLimit)
                 .lean(),
-            Transaction.find(esimQuery)
+            Transaction.find(miscQuery)
                 .populate('user', 'name email')
                 .sort({ createdAt: -1 })
                 .limit(fetchLimit)
@@ -106,22 +105,25 @@ export async function GET(req: Request) {
             details: r.smsCode ? `Code: ${r.smsCode}` : 'Waiting for SMS...'
         }));
 
-        const normalizedEsims = esims.map((t: any) => ({
-            _id: t._id,
-            original_type: 'esim',
-            user: t.user,
-            service_name: t.description || 'eSIM Purchase',
-            link: null, // No link for eSIM
-            quantity: 1,
-            charge: t.amount,
-            status: t.status === 'successful' ? 'Completed' : (t.status.charAt(0).toUpperCase() + t.status.slice(1)),
-            createdAt: t.createdAt,
-            external_order_id: t.reference,
-            details: t.metadata?.planName || 'eSIM Data Plan'
-        }));
+        const normalizedMisc = miscOrders.map((t: any) => {
+            const isEsim = t.category === 'esim_purchase' || t.description?.toLowerCase().includes('esim') || t.metadata?.planId;
+            return {
+                _id: t._id,
+                original_type: isEsim ? 'esim' : 'misc',
+                user: t.user,
+                service_name: t.description || (isEsim ? 'eSIM Purchase' : 'Service Order'),
+                link: null,
+                quantity: 1,
+                charge: t.amount,
+                status: t.status === 'successful' ? 'Completed' : (t.status.charAt(0).toUpperCase() + t.status.slice(1)),
+                createdAt: t.createdAt,
+                external_order_id: t.reference,
+                details: isEsim ? (t.metadata?.planName || 'eSIM Data Plan') : (t.metadata?.network || t.category || '')
+            };
+        });
 
         // 4. Merge and Sort
-        const allOrders = [...normalizedBoosts, ...normalizedRentals, ...normalizedEsims].sort((a: any, b: any) =>
+        const allOrders = [...normalizedBoosts, ...normalizedRentals, ...normalizedMisc].sort((a: any, b: any) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
 
@@ -135,8 +137,8 @@ export async function GET(req: Request) {
         // For accurate counts, we'd need separate CountDocuments queries.
         const totalBoosts = await Order.countDocuments(boostQuery);
         const totalRentals = await VirtualNumber.countDocuments(rentalQuery);
-        const totalEsims = await Transaction.countDocuments(esimQuery);
-        const total = totalBoosts + totalRentals + totalEsims;
+        const totalMisc = await Transaction.countDocuments(miscQuery);
+        const total = totalBoosts + totalRentals + totalMisc;
 
         return NextResponse.json({
             success: true,

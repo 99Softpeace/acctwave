@@ -138,7 +138,14 @@ export default function AdminOrdersPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-gray-500">
-                                            {new Date(order.createdAt).toLocaleDateString()}
+                                            {new Date(order.createdAt).toLocaleString('en-US', {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric',
+                                                hour: 'numeric',
+                                                minute: '2-digit',
+                                                hour12: true
+                                            })}
                                         </td>
                                     </tr>
                                 ))
