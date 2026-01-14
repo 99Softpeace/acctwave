@@ -1,12 +1,12 @@
 {
-  "service": 6837,
-  "name": "Instagram Followers ➜ [ Speed : 5K+/Day | Refill : No ] ⛔",
+  "service": 6984,
+  "name": "TikTok Followers ➜ [ Speed : 5K+/Day | Refill: No ] ⛔",
   "type": "Default",
-  "rate": "0.373",
+  "rate": "0.13",
   "min": 100,
-  "max": 50000,
+  "max": 20000,
   "dripfeed": false,
   "refill": false,
-  "cancel": false,
+  "cancel": true,
   "category": "ResellerSMM New Services [Cheapest in the Market]"
 }

@@ -14,7 +14,25 @@ export async function GET(request: Request) {
         let countries = [];
 
         // Fetch Countries
-        const countriesData = await SMSPool.getCountries();
+        let countriesData = await SMSPool.getCountries();
+
+        // FAILSAFE: If API returns 0 countries (Rate Limit), use Fallback
+        if (!countriesData || countriesData.length === 0) {
+            console.warn('SMSPool Countries API failed/empty. Using Fallback Countries.');
+            countriesData = [
+                { id: '1', name: 'United States', short_name: 'US' },
+                { id: '44', name: 'United Kingdom', short_name: 'GB' },
+                { id: '7', name: 'Russia', short_name: 'RU' },
+                { id: '380', name: 'Ukraine', short_name: 'UA' },
+                { id: '49', name: 'Germany', short_name: 'DE' },
+                { id: '31', name: 'Netherlands', short_name: 'NL' },
+                { id: '33', name: 'France', short_name: 'FR' },
+                { id: '34', name: 'Spain', short_name: 'ES' },
+                { id: '62', name: 'Indonesia', short_name: 'ID' },
+                { id: '84', name: 'Vietnam', short_name: 'VN' },
+                { id: '234', name: 'Nigeria', short_name: 'NG' }
+            ];
+        }
 
         // Filter and Map
         countries = countriesData
@@ -27,10 +45,6 @@ export async function GET(request: Request) {
             .sort((a: any, b: any) => a.name.localeCompare(b.name));
 
         // Determine effective Country ID for SMSPool
-        // The API expects an integer ID.
-        // 1. Try to find by short_name (e.g. 'US', 'GB')
-        // 2. Try to find by name (e.g. 'United States', 'United Kingdom')
-        // 3. Fallback to the provided param if it looks like an ID
         let effectiveCountryId = countryId;
 
         const countryMatch = countriesData.find((c: any) =>
@@ -42,7 +56,6 @@ export async function GET(request: Request) {
         if (countryMatch) {
             effectiveCountryId = countryMatch.id;
         } else if (countryId.toUpperCase() === 'UK') {
-            // Special case for manual "UK" param often used
             const ukMatch = countriesData.find((c: any) => c.short_name === 'GB' || c.name === 'United Kingdom');
             if (ukMatch) effectiveCountryId = ukMatch.id;
         }
@@ -58,97 +71,106 @@ export async function GET(request: Request) {
         // Increase limit to 500 to catch more services
         const servicesToFetch = [...prioritizedServices, ...otherServices].slice(0, 500);
 
-        console.log(`Fetching prices for ${servicesToFetch.length} services in country ${effectiveCountryId} (Req: ${countryId})...`);
+        console.log('Countries found:', countries.length);
+        console.log('Effective Country ID:', effectiveCountryId);
+        console.log('Raw Services found:', spServices.length);
+        console.log(`Processing ${servicesToFetch.length} services in country ${effectiveCountryId} (Req: ${countryId})...`);
 
-        const servicesWithPrices = await Promise.all(
-            servicesToFetch.map(async (s) => {
-                try {
-                    // Timeout race logic
-                    const pricePromise = SMSPool.getPrice(effectiveCountryId, s.id);
-                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000));
-                    const priceUSD = await Promise.race([pricePromise, timeoutPromise]) as number;
+        // Batch processing helper to avoid timeouts
+        const batchSize = 50;
+        const results = [];
 
-                    let margin = 70; // Default
+        // FAILSAFE: If API returns 0 services (e.g. Rate Limit 429), use a Hardcoded Fallback List for US
+        // This ensures the main services are ALWAYS visible and purchasable.
+        if (effectiveCountryId === '1' && servicesToFetch.length === 0) {
+            console.warn('SMSPool API returned 0 services (Rate Limited?). Using Fallback List.');
+            const FALLBACK_SERVICES = [
+                { id: 'WhatsApp', name: 'WhatsApp', price: 0 },
+                { id: 'Telegram', name: 'Telegram', price: 0 },
+                { id: 'Facebook', name: 'Facebook', price: 0 },
+                { id: 'Instagram', name: 'Instagram', price: 0 },
+                { id: 'Twitter', name: 'Twitter / X', price: 0 },
+                { id: 'Google', name: 'Google / Gmail', price: 0 },
+                { id: 'TikTok', name: 'TikTok', price: 0 },
+                { id: 'Discord', name: 'Discord', price: 0 },
+                { id: 'Snapchat', name: 'Snapchat', price: 0 },
+                { id: 'Uber', name: 'Uber', price: 0 },
+                { id: 'Amazon', name: 'Amazon', price: 0 },
+                { id: 'Netflix', name: 'Netflix', price: 0 },
+                { id: 'PayPal', name: 'PayPal', price: 0 },
+                { id: 'Microsoft', name: 'Microsoft', price: 0 },
+                { id: 'Yahoo', name: 'Yahoo', price: 0 },
+                { id: 'Apple', name: 'Apple', price: 0 },
+                { id: 'Signal', name: 'Signal', price: 0 },
+                { id: 'Viber', name: 'Viber', price: 0 },
+                { id: 'WeChat', name: 'WeChat', price: 0 }
+            ];
+            servicesToFetch.push(...FALLBACK_SERVICES);
+        }
 
-                    if (effectiveCountryId === '1') {
-                        margin = 600;
-                    } else {
-                        // Non-US: Increase margin to 800% EXCEPT for WhatsApp and Telegram
+        for (let i = 0; i < servicesToFetch.length; i += batchSize) {
+            const batch = servicesToFetch.slice(i, i + batchSize);
+            const batchResults = await Promise.all(
+                batch.map(async (s) => {
+                    try {
+                        let finalPrice = 0;
                         const nameLower = s.name.toLowerCase();
-                        if (!nameLower.includes('whatsapp') && !nameLower.includes('telegram')) {
-                            margin = 800;
+
+                        // 1. Check for Static Overrides FIRST (Skip API call if matched)
+                        // Custom Overrides for USA (ID 1)
+                        if (effectiveCountryId === '1') {
+                            if (nameLower.includes('snapchat')) {
+                                return { id: s.id, name: s.name, price: 1600 };
+                            } else if (nameLower.includes('telegram')) {
+                                return { id: s.id, name: s.name, price: 3800 };
+                            } else if (nameLower.includes('twitter') || nameLower.includes('x')) {
+                                return { id: s.id, name: s.name, price: 1380 };
+                            } else if (nameLower.includes('facebook')) {
+                                return { id: s.id, name: s.name, price: 2980 };
+                            } else if (nameLower.includes('discord')) {
+                                return { id: s.id, name: s.name, price: 1680 };
+                            } else if (nameLower.includes('whatsapp')) {
+                                return { id: s.id, name: s.name, price: 3927 };
+                            } else if (nameLower.includes('signal')) {
+                                return { id: s.id, name: s.name, price: 1680 };
+                            }
                         }
-                    }
 
-                    let finalPrice = calculatePrice(priceUSD, margin);
+                        // 2. If no override, fetch price with timeout
+                        const pricePromise = SMSPool.getPrice(effectiveCountryId, s.id);
+                        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 4000)); // Increased timeout slightly
+                        const priceUSD = await Promise.race([pricePromise, timeoutPromise]) as number;
 
-                    // Custom Overrides for USA (ID 1)
-                    if (effectiveCountryId === '1') {
-                        if (s.name.toLowerCase().includes('snapchat')) {
-                            finalPrice = 1600;
-                        } else if (s.name.toLowerCase().includes('telegram')) {
-                            finalPrice = 3800;
-                        } else if (s.name.toLowerCase().includes('twitter') || s.name.toLowerCase().includes('x')) {
-                            finalPrice = 1380;
-                        } else if (s.name.toLowerCase().includes('facebook')) {
-                            finalPrice = 2980;
-                        } else if (s.name.toLowerCase().includes('discord')) {
-                            finalPrice = 1680;
-                        } else if (s.name.toLowerCase().includes('whatsapp')) {
-                            finalPrice = 3927;
-                        } else if (s.name.toLowerCase().includes('signal')) {
-                            finalPrice = 1680;
+                        let margin = 70; // Default
+
+                        if (effectiveCountryId === '1') {
+                            margin = 600;
+                        } else {
+                            // Non-US: Increase margin to 800% EXCEPT for WhatsApp and Telegram
+                            if (!nameLower.includes('whatsapp') && !nameLower.includes('telegram')) {
+                                margin = 800;
+                            }
                         }
+
+                        finalPrice = calculatePrice(priceUSD, margin);
+
+                        return {
+                            id: s.id,
+                            name: s.name,
+                            price: finalPrice
+                        };
+                    } catch (error) {
+                        // If fetching fails, DO NOT return a fallback price. 
+                        // It is better to filter out the service than show a wrong/fluctuating price.
+                        return null;
                     }
+                })
+            );
+            results.push(...batchResults);
+        }
 
-                    return {
-                        id: s.id,
-                        name: s.name,
-                        price: finalPrice
-                    };
-                } catch (error) {
-                    let margin = 70; // Default
-
-                    if (effectiveCountryId === '1') {
-                        margin = 600;
-                    } else {
-                        const nameLower = s.name.toLowerCase();
-                        if (!nameLower.includes('whatsapp') && !nameLower.includes('telegram')) {
-                            margin = 800;
-                        }
-                    }
-
-                    let fallbackPrice = calculatePrice(0.5, margin);
-
-                    // Custom Overrides for USA (ID 1)
-                    if (effectiveCountryId === '1') {
-                        if (s.name.toLowerCase().includes('snapchat')) {
-                            fallbackPrice = 1600;
-                        } else if (s.name.toLowerCase().includes('telegram')) {
-                            fallbackPrice = 3800;
-                        } else if (s.name.toLowerCase().includes('twitter') || s.name.toLowerCase().includes('x')) {
-                            fallbackPrice = 1380;
-                        } else if (s.name.toLowerCase().includes('facebook')) {
-                            fallbackPrice = 2980;
-                        } else if (s.name.toLowerCase().includes('discord')) {
-                            fallbackPrice = 1680;
-                        } else if (s.name.toLowerCase().includes('whatsapp')) {
-                            fallbackPrice = 3927;
-                        } else if (s.name.toLowerCase().includes('signal')) {
-                            fallbackPrice = 1680;
-                        }
-                    }
-
-                    return {
-                        id: s.id,
-                        name: s.name,
-                        price: fallbackPrice
-                    };
-                }
-            })
-        );
-
-        services = servicesWithPrices.filter(s => s.price > 0);
+        // Filter out nulls (failed fetches) and zero prices
+        services = results.filter(s => s && s.price > 0);
 
         return NextResponse.json({
             success: true,
